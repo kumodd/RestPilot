@@ -83,8 +83,52 @@ export async function createInvitation(restaurantId: string, role: string, email
     throw new Error('Failed to create invitation')
   }
 
-  // In a real application, you would send an email here with the token link.
-  // For now, we will return the link so the frontend can display it or send it.
+  // Fetch restaurant name for the email
+  const { data: restaurantData } = await adminClient
+    .from('restaurants')
+    .select('name')
+    .eq('id', restaurantId)
+    .single()
+
+  const restaurantName = restaurantData?.name || 'our restaurant'
+  const roleName = role.charAt(0).toUpperCase() + role.slice(1)
+
+  // Send email if Resend is configured
+  if (process.env.RESEND_API_KEY) {
+    try {
+      const { Resend } = await import('resend')
+      const resend = new Resend(process.env.RESEND_API_KEY)
+      const inviteLink = `${process.env.NEXT_PUBLIC_APP_URL || 'https://restpilot.space'}/auth/accept-invite?token=${token}`
+
+      const { error: resendError } = await resend.emails.send({
+        from: 'RestPilot <noreply@restpilot.space>',
+        to: email,
+        subject: `You've been invited to join ${restaurantName}`,
+        html: `
+          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
+            <h2 style="color: #FF6B35;">Welcome to RestPilot!</h2>
+            <p>You have been invited to join <strong>${restaurantName}</strong> as a <strong>${roleName}</strong>.</p>
+            <p>Click the button below to accept your invitation and set up your account:</p>
+            <p style="margin: 30px 0;">
+              <a href="${inviteLink}" style="display:inline-block;padding:12px 24px;background-color:#FF6B35;color:white;text-decoration:none;border-radius:8px;font-weight:bold;">
+                Accept Invitation
+              </a>
+            </p>
+            <p style="color:#737373;font-size:0.9em;margin-top:40px;border-top:1px solid #eaeaea;padding-top:20px;">
+              If you weren't expecting this invitation, you can safely ignore this email.
+            </p>
+          </div>
+        `
+      })
+
+      if (resendError) {
+        console.error('Resend API error:', resendError)
+      }
+    } catch (e) {
+      console.error('Failed to initialize or send Resend email:', e)
+    }
+  }
+
   return token
 }
 
