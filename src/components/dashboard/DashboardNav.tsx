@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { usePathname, useParams, useRouter } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { Profile } from '@/lib/types/app.types'
 import type { User } from '@supabase/supabase-js'
@@ -15,12 +15,15 @@ interface Props {
 
 export default function DashboardNav({ profile, user, restaurants }: Props) {
   const pathname = usePathname()
-  const params = useParams()
   const router = useRouter()
   const supabase = createClient()
 
-  const restaurantId = params.restaurantId as string | undefined
-  const urlBranchId = params.branchId as string | undefined
+  // In Next.js App Router, useParams() in a parent layout doesn't receive child segment params.
+  // Since DashboardNav is in /dashboard/layout.tsx, we must extract them from the pathname.
+  const parts = pathname.split('/')
+  // Pathname is usually /dashboard/[restaurantId]/[branchId]/...
+  const restaurantId = parts[2] && parts[2] !== 'admin' ? parts[2] : undefined
+  const urlBranchId = parts[3] && !['menu', 'staff', 'suggestions', 'settings'].includes(parts[3]) ? parts[3] : undefined
   const [defaultBranchId, setDefaultBranchId] = useState<string | null>(null)
 
   // Fetch a default branch if none is in the URL so we can construct Operations links
