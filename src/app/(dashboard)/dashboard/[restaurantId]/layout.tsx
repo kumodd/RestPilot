@@ -28,8 +28,8 @@ export default async function RestaurantLayout({
       if (rest) hasAccess = true
     }
   } else {
-    const { data: staffRaw } = await supabase.from('staff_members').select('id').eq('profile_id', user.id).eq('restaurant_id', restaurantId).eq('is_active', true).single()
-    const staff = staffRaw as { id: string } | null
+    const { data: staffRaw } = await supabase.from('staff_members').select('id').eq('profile_id', user.id).eq('restaurant_id', restaurantId).eq('is_active', true).limit(1)
+    const staff = (staffRaw as { id: string }[])?.[0] || null
     if (staff) hasAccess = true
   }
 
