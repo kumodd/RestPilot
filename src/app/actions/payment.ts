@@ -8,6 +8,18 @@ export async function processPayment(orderId: string, method: string, amount: nu
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Unauthorized')
 
+  // Role check — only cashier, manager, owner, or platform_admin may process payments
+  const { data: profileRaw } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+  const profile = profileRaw as { role: string } | null
+  const allowedRoles = ['cashier', 'manager', 'owner', 'platform_admin']
+  if (!profile || !allowedRoles.includes(profile.role)) {
+    throw new Error('Unauthorized: only cashier, manager, or owner can process payments')
+  }
+
   // Verify actor has access and gets order info
   const { data: order, error: orderError } = await supabase
     .from('orders')
@@ -20,7 +32,6 @@ export async function processPayment(orderId: string, method: string, amount: nu
   }
 
   // Ensure exact amount matches if we want strict payments, or just log the amount
-  // We'll insert into payments table
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: payment, error: paymentError } = await (supabase.from('payments') as any)
     .insert({

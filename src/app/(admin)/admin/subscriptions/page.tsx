@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { formatPriceCompact } from '@/lib/utils/price'
+import { redirect } from 'next/navigation'
 
 export const metadata: Metadata = { title: 'Subscriptions — RestPilot Admin' }
 
@@ -24,6 +25,14 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default async function AdminSubscriptionsPage() {
   const supabase = await createClient()
+
+  // Page-level auth guard (defense in depth — layout also checks)
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/auth/login')
+  const { data: profileRaw } = await supabase
+    .from('profiles').select('role').eq('id', user.id).single()
+  const profile = profileRaw as { role: string } | null
+  if (profile?.role !== 'platform_admin') redirect('/dashboard')
 
   const { data: subsRaw } = await supabase
     .from('subscriptions')

@@ -2,6 +2,11 @@ import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
+import {
+  OwnerLifecycleButtons,
+  RestaurantLifecycleButtons,
+  StaffToggleButton,
+} from '@/components/admin/AdminActionButtons'
 
 export const metadata: Metadata = { title: 'Manage Owner — RestPilot Admin' }
 
@@ -99,7 +104,10 @@ export default async function OwnerManagePage({ params }: { params: Promise<{ ow
             {restaurants.length} / {owner.max_restaurants} restaurants
           </p>
         </div>
-        <Link href={`/admin/owners/create`} className="btn btn-secondary">+ Add Restaurant</Link>
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', flexDirection: 'column' }}>
+          <OwnerLifecycleButtons ownerId={owner.id} isActive={owner.is_active} />
+          <Link href={`/admin/restaurants`} className="btn btn-secondary" style={{ fontSize: '0.82rem', padding: '6px 14px' }}>View Restaurants →</Link>
+        </div>
       </div>
 
       {/* Owner info card */}
@@ -110,11 +118,12 @@ export default async function OwnerManagePage({ params }: { params: Promise<{ ow
         }}
       >
         {[
-          { label: 'Email', value: owner.email ?? '—', icon: '✉️' },
-          { label: 'Phone', value: owner.phone ?? '—', icon: '📱' },
-          { label: 'Plan', value: owner.subscription_plan, icon: '💳' },
-          { label: 'Status', value: owner.subscription_status, icon: '📊' },
+          { label: 'Email',       value: owner.email ?? '—',                icon: '✉️' },
+          { label: 'Phone',       value: owner.phone ?? '—',                icon: '📱' },
+          { label: 'Plan',        value: owner.subscription_plan,           icon: '💳' },
+          { label: 'Status',      value: owner.subscription_status,         icon: '📊' },
           { label: 'Owner Since', value: new Date(owner.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }), icon: '📅' },
+          { label: 'Account',     value: owner.is_active ? 'Active' : 'Suspended', icon: owner.is_active ? '✅' : '🔴' },
         ].map(item => (
           <div key={item.label} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '14px' }}>
             <p style={{ fontSize: '0.7rem', color: '#525252', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{item.label}</p>
@@ -151,7 +160,7 @@ export default async function OwnerManagePage({ params }: { params: Promise<{ ow
                       {activeStaff.length} active staff · Created {new Date(restaurant.created_at).toLocaleDateString('en-IN')}
                     </p>
                   </div>
-                  <div style={{ display: 'flex', gap: '8px' }}>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                     <span
                       style={{
                         padding: '4px 10px', borderRadius: '999px', fontSize: '0.7rem', fontWeight: 700,
@@ -162,6 +171,10 @@ export default async function OwnerManagePage({ params }: { params: Promise<{ ow
                     >
                       {restaurant.is_accepting_orders ? 'Accepting Orders' : 'Paused'}
                     </span>
+                    <RestaurantLifecycleButtons
+                      restaurantId={restaurant.id}
+                      isActive={restaurant.is_active}
+                    />
                   </div>
                 </div>
 
@@ -221,6 +234,7 @@ export default async function OwnerManagePage({ params }: { params: Promise<{ ow
                               </div>
                             )}
                           </div>
+                          <StaffToggleButton staffId={member.id} isActive={member.is_active} />
                         </div>
                       )
                     })

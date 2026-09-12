@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
 
 export const metadata: Metadata = { title: 'All Restaurants — RestPilot Admin' }
 
@@ -16,6 +17,14 @@ interface RestaurantRow {
 
 export default async function AdminRestaurantsPage() {
   const supabase = await createClient()
+
+  // Page-level auth guard (defense in depth — layout also checks)
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/auth/login')
+  const { data: profileRaw } = await supabase
+    .from('profiles').select('role').eq('id', user.id).single()
+  const profile = profileRaw as { role: string } | null
+  if (profile?.role !== 'platform_admin') redirect('/dashboard')
 
   const { data: restaurantsRaw } = await supabase
     .from('restaurants')

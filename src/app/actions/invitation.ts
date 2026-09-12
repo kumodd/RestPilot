@@ -117,6 +117,45 @@ export async function validateInvitation(token: string) {
 }
 
 export async function getPendingInvitations(restaurantId: string) {
+  // Auth check: verify caller has access to this restaurant
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+
+  // Must be platform_admin, owner of this restaurant, or manager
+  const { data: profileRaw } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+  const profile = profileRaw as { role: string } | null
+
+  if (profile?.role !== 'platform_admin') {
+    // Check if they own the restaurant or are a manager
+    const { data: accessRaw } = await supabase
+      .from('staff_members')
+      .select('role')
+      .eq('restaurant_id', restaurantId)
+      .eq('profile_id', user.id)
+      .eq('is_active', true)
+      .single()
+    const staffAccess = accessRaw as { role: string } | null
+
+    const { data: ownerAccessRaw } = await supabase
+      .from('owners')
+      .select('id')
+      .eq('profile_id', user.id)
+      .single()
+
+    const isOwner = ownerAccessRaw !== null
+    const isManager = staffAccess?.role === 'manager'
+
+    if (!isOwner && !isManager) {
+      throw new Error('You do not have permission to view invitations for this restaurant.')
+    }
+  }
+
+  // Now fetch with service role (bypasses INSERT/UPDATE FALSE policies for reads)
   const adminClient = createSupabaseClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
@@ -128,7 +167,7 @@ export async function getPendingInvitations(restaurantId: string) {
     .eq('restaurant_id', restaurantId)
     .is('accepted_at', null)
     .order('created_at', { ascending: false })
-  
+
   if (error) {
     console.error('Failed to get pending invitations', error)
     return []

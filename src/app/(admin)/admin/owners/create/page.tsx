@@ -16,5 +16,5 @@ export default async function CreateOwnerPage() {
   const profile = profileRaw as { role: string } | null
   if (profile?.role !== 'platform_admin') redirect('/dashboard')
 
-  return <CreateOwnerClient adminId={user.id} />
+  return <CreateOwnerClient />
 }

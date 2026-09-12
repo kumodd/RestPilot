@@ -16,7 +16,7 @@ type Phase = 'owner' | 'restaurant' | 'done'
 
 interface Result { ownerId: string; profileId: string; restaurantId?: string; branchId?: string; inviteRequired?: boolean }
 
-export default function CreateOwnerClient({ adminId }: { adminId: string }) {
+export default function CreateOwnerClient() {
   const supabase = createClient()
   const router = useRouter()
 
@@ -46,7 +46,6 @@ export default function CreateOwnerClient({ adminId }: { adminId: string }) {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error: err } = await (supabase.rpc as any)('provision_owner', {
-      p_admin_id:        adminId,
       p_owner_email:     s1.ownerEmail,
       p_owner_name:      s1.ownerName,
       p_owner_phone:     s1.ownerPhone,
@@ -101,7 +100,6 @@ export default function CreateOwnerClient({ adminId }: { adminId: string }) {
       p_email:           s2.email || null,
       p_currency:        s2.currency,
       p_currency_symbol: s2.currencySymbol,
-      p_actor_id:        adminId,
     })
 
     if (err) { setError(err.message); setIsLoading(false); return }

@@ -19,6 +19,7 @@ export default async function AdminPage() {
 
   const [
     { data: restaurantsRaw, count: restaurantCount },
+    { count: activeRestaurantCount },
     { data: ownersRaw, count: ownerCount },
     { data: ordersRaw },
   ] = await Promise.all([
@@ -27,6 +28,11 @@ export default async function AdminPage() {
       .select('id, name, is_active, created_at, subscription_plan', { count: 'exact' })
       .order('created_at', { ascending: false })
       .limit(10),
+    // Separate accurate count for active restaurants only
+    supabase
+      .from('restaurants')
+      .select('id', { count: 'exact', head: true })
+      .eq('is_active', true),
     supabase
       .from('owners')
       .select('id', { count: 'exact' }),
@@ -37,10 +43,11 @@ export default async function AdminPage() {
   ])
 
   const restaurants = (restaurantsRaw as RestaurantRow[] | null) ?? []
-  const activeRestaurants = restaurants.filter(r => r.is_active).length
+  const activeRestaurants = activeRestaurantCount ?? 0
   const monthlyRevenue = (ordersRaw as Array<{ total: number }> | null)
     ?.reduce((acc, o) => acc + (o.total ?? 0), 0) ?? 0
   const monthlyOrders = ordersRaw?.length ?? 0
+
 
   const PLAN_COLORS: Record<string, string> = {
     free: '#737373',
