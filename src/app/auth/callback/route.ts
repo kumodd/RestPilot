@@ -12,7 +12,11 @@ export async function GET(request: Request) {
     if (!error) {
       return NextResponse.redirect(`${origin}${redirect}`)
     }
+    
+    // Log the exact error for debugging
+    console.error('Supabase auth callback error:', error)
+    return NextResponse.redirect(`${origin}/auth/login?error=auth_callback_failed&details=${encodeURIComponent(error.message)}`)
   }
 
-  return NextResponse.redirect(`${origin}/auth/login?error=auth_callback_failed`)
+  return NextResponse.redirect(`${origin}/auth/login?error=missing_code`)
 }
