@@ -19,7 +19,9 @@ export default async function RestaurantLayout({
   const profile = profileRaw as { role: string } | null
   
   let hasAccess = false
-  if (profile?.role === 'owner' || profile?.role === 'platform_admin') {
+  if (profile?.role === 'platform_admin') {
+    hasAccess = true
+  } else if (profile?.role === 'owner') {
     const { data: ownerRaw } = await supabase.from('owners').select('id').eq('profile_id', user.id).single()
     const owner = ownerRaw as { id: string } | null
     if (owner) {
@@ -28,7 +30,10 @@ export default async function RestaurantLayout({
       if (rest) hasAccess = true
     }
   } else {
-    const { data: staffRaw } = await supabase.from('staff_members').select('id').eq('profile_id', user.id).eq('restaurant_id', restaurantId).eq('is_active', true).limit(1)
+    const { data: staffRaw, error } = await supabase.from('staff_members').select('id').eq('profile_id', user.id).eq('restaurant_id', restaurantId).eq('is_active', true).limit(1)
+    try {
+      require('fs').writeFileSync('/Users/cdse/Desktop/RestPilot/debug.json', JSON.stringify({ restaurantId, userId: user.id, data: staffRaw, error }))
+    } catch(e) {}
     const staff = (staffRaw as { id: string }[])?.[0] || null
     if (staff) hasAccess = true
   }

@@ -24,7 +24,14 @@ export default async function GlobalDashboardPage() {
   let maxRestaurants = 0
   let canCreate = false
 
-  if (profile.role === 'owner' || profile.role === 'platform_admin') {
+  if (profile.role === 'platform_admin') {
+    const { data: rests } = await supabase
+      .from('restaurants')
+      .select('*')
+      .eq('is_active', true)
+    restaurants = rests || []
+    canCreate = true // Admins can create unlimited restaurants
+  } else if (profile.role === 'owner') {
     const { data: ownerRaw } = await supabase
       .from('owners')
       .select('id, max_restaurants')
