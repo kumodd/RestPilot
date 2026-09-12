@@ -15,23 +15,8 @@ export default async function RestaurantLayout({
   if (!user) redirect('/auth/login')
 
   // Validate user has access to this restaurant
-  const { data: profileRaw } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-  const profile = profileRaw as { role: string } | null
-  
-  let hasAccess = false
-  if (profile?.role === 'owner' || profile?.role === 'platform_admin') {
-    const { data: ownerRaw } = await supabase.from('owners').select('id').eq('profile_id', user.id).single()
-    const owner = ownerRaw as { id: string } | null
-    if (owner) {
-      const { data: restRaw } = await supabase.from('restaurants').select('id').eq('id', restaurantId).eq('owner_id', owner.id).single()
-      const rest = restRaw as { id: string } | null
-      if (rest) hasAccess = true
-    }
-  } else {
-    const { data: staffRaw } = await supabase.from('staff_members').select('id').eq('profile_id', user.id).eq('restaurant_id', restaurantId).eq('is_active', true).limit(1)
-    const staff = (staffRaw as { id: string }[])?.[0] || null
-    if (staff) hasAccess = true
-  }
+  const { data: hasAccess, error } = await supabase.rpc('has_restaurant_access', { p_restaurant_id: restaurantId })
+  if (error) console.error('Access check error:', error)
 
   if (!hasAccess) {
     redirect('/dashboard') // Redirect to global dashboard if they try to access a restaurant they don't own/work at
