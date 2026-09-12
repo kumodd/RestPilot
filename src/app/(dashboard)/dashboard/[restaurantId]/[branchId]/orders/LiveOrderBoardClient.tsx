@@ -40,6 +40,7 @@ interface Props {
 export default function LiveOrderBoardClient({ restaurantId, branchId }: Props) {
   const [orders, setOrders] = useState<Order[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null)
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
   const supabase = createClient()
 
@@ -79,11 +80,15 @@ export default function LiveOrderBoardClient({ restaurantId, branchId }: Props) 
   }, [branchId, supabase, fetchOrders])
 
   const updateOrderStatus = async (orderId: string, newStatus: OrderStatus) => {
+    if (updatingOrderId) return
     try {
+      setUpdatingOrderId(orderId)
       await updateOrderStatusAction(orderId, newStatus)
-      fetchOrders()
+      await fetchOrders()
     } catch (e) {
       console.error(e)
+    } finally {
+      setUpdatingOrderId(null)
     }
   }
 
@@ -336,6 +341,7 @@ export default function LiveOrderBoardClient({ restaurantId, branchId }: Props) 
                                   e.stopPropagation()
                                   updateOrderStatus(order.id, nextStatus)
                                 }}
+                                disabled={updatingOrderId === order.id}
                                 style={{
                                   padding: '4px 10px',
                                   background: `${col.color}20`,
@@ -344,12 +350,30 @@ export default function LiveOrderBoardClient({ restaurantId, branchId }: Props) 
                                   color: col.color,
                                   fontSize: '0.72rem',
                                   fontWeight: 700,
-                                  cursor: 'pointer',
+                                  cursor: updatingOrderId === order.id ? 'not-allowed' : 'pointer',
                                   textTransform: 'uppercase',
                                   letterSpacing: '0.04em',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  minWidth: '32px',
+                                  opacity: updatingOrderId === order.id ? 0.7 : 1,
                                 }}
                               >
-                                →
+                                {updatingOrderId === order.id ? (
+                                  <div
+                                    style={{
+                                      width: '12px',
+                                      height: '12px',
+                                      border: `2px solid ${col.color}40`,
+                                      borderTopColor: col.color,
+                                      borderRadius: '50%',
+                                      animation: 'spin 0.7s linear infinite',
+                                    }}
+                                  />
+                                ) : (
+                                  '→'
+                                )}
                               </button>
                             )}
                           </div>

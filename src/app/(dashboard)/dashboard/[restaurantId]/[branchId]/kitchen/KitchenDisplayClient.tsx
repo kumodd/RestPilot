@@ -37,6 +37,8 @@ export default function KitchenDisplayClient({ restaurantId, branchId }: Props) 
   const supabase = createClient()
   const [orders, setOrders] = useState<KitchenOrder[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null)
+  const [updatingItemId, setUpdatingItemId] = useState<string | null>(null)
   const [lastRefresh, setLastRefresh] = useState(new Date())
   const audioRef = useRef<AudioContext | null>(null)
   const prevOrderIds = useRef<Set<string>>(new Set())
@@ -103,6 +105,7 @@ export default function KitchenDisplayClient({ restaurantId, branchId }: Props) 
   }, [branchId, supabase, fetchOrders])
 
   const advanceOrder = async (order: KitchenOrder) => {
+    if (updatingOrderId) return
     const next: Partial<Record<OrderStatus, OrderStatus>> = {
       confirmed: 'kitchen_accepted',
       kitchen_accepted: 'preparing',
@@ -112,17 +115,26 @@ export default function KitchenDisplayClient({ restaurantId, branchId }: Props) 
     if (!nextStatus) return
 
     try {
+      setUpdatingOrderId(order.id)
       await updateOrderStatusAction(order.id, nextStatus)
-      fetchOrders()
+      await fetchOrders()
     } catch (e) {
       console.error(e)
+    } finally {
+      setUpdatingOrderId(null)
     }
   }
 
   const updateItemStatus = async (itemId: string, status: string) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase.from('order_items') as any).update({ status }).eq('id', itemId)
-    fetchOrders()
+    if (updatingItemId) return
+    try {
+      setUpdatingItemId(itemId)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase.from('order_items') as any).update({ status }).eq('id', itemId)
+      await fetchOrders()
+    } finally {
+      setUpdatingItemId(null)
+    }
   }
 
   const STATUS_CONFIG: Record<string, { label: string; color: string; nextLabel: string }> = {
@@ -295,16 +307,20 @@ export default function KitchenDisplayClient({ restaurantId, branchId }: Props) 
                         >
                           <button
                             onClick={() => updateItemStatus(item.id, isDone ? 'preparing' : 'ready')}
+                            disabled={updatingItemId === item.id}
                             style={{
                               width: '22px', height: '22px', borderRadius: '50%',
                               border: `2px solid ${isDone ? '#22C55E' : 'rgba(255,255,255,0.2)'}`,
                               background: isDone ? '#22C55E' : 'transparent',
-                              color: 'white', cursor: 'pointer', flexShrink: 0,
+                              color: 'white', cursor: updatingItemId === item.id ? 'not-allowed' : 'pointer', flexShrink: 0,
                               fontSize: '0.7rem', display: 'flex', alignItems: 'center', justifyContent: 'center',
                               marginTop: '1px',
+                              opacity: updatingItemId === item.id ? 0.7 : 1,
                             }}
                           >
-                            {isDone ? '✓' : ''}
+                            {updatingItemId === item.id ? (
+                              <div style={{ width: '10px', height: '10px', borderRadius: '50%', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: 'white', animation: 'spin 0.7s linear infinite' }} />
+                            ) : isDone ? '✓' : ''}
                           </button>
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
@@ -334,15 +350,22 @@ export default function KitchenDisplayClient({ restaurantId, branchId }: Props) 
                 {cfg.nextLabel && (
                   <button
                     onClick={() => advanceOrder(order)}
+                    disabled={updatingOrderId === order.id}
                     style={{
                       width: '100%', padding: '14px',
                       background: cfg.color, border: 'none',
                       color: 'white', fontSize: '0.9rem', fontWeight: 800,
-                      cursor: 'pointer', transition: 'opacity 0.2s',
+                      cursor: updatingOrderId === order.id ? 'not-allowed' : 'pointer', transition: 'opacity 0.2s',
                       letterSpacing: '0.02em',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                      opacity: updatingOrderId === order.id ? 0.8 : 1,
                     }}
                   >
-                    {cfg.nextLabel}
+                    {updatingOrderId === order.id ? (
+                       <div style={{ width: '16px', height: '16px', borderRadius: '50%', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: 'white', animation: 'spin 0.7s linear infinite' }} />
+                    ) : (
+                      cfg.nextLabel
+                    )}
                   </button>
                 )}
               </div>
