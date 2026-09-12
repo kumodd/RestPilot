@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
@@ -17,6 +17,19 @@ export default function LoginClient() {
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const [hashError, setHashError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.hash) {
+      const hashParams = new URLSearchParams(window.location.hash.substring(1))
+      const desc = hashParams.get('error_description')
+      if (desc) {
+        setHashError(desc.replace(/\+/g, ' '))
+        // Clean up URL
+        window.history.replaceState(null, '', window.location.pathname + window.location.search)
+      }
+    }
+  }, [])
 
   const supabase = createClient()
 
@@ -26,6 +39,7 @@ export default function LoginClient() {
 
     setIsLoading(true)
     setMessage(null)
+    setHashError(null)
 
     const { error } = await supabase.auth.signInWithOtp({
       email: email.trim(),
@@ -51,6 +65,7 @@ export default function LoginClient() {
 
     setIsLoading(true)
     setMessage(null)
+    setHashError(null)
 
     const { error } = await supabase.auth.signInWithPassword({
       email: email.trim(),
@@ -148,8 +163,8 @@ export default function LoginClient() {
             Sign in to your restaurant dashboard
           </p>
 
-          {/* Error from URL params */}
-          {errorParam === 'account_inactive' && (
+          {/* Error from URL params or hash */}
+          {(errorParam || hashError) && (
             <div
               style={{
                 background: 'rgba(239,68,68,0.1)',
@@ -161,7 +176,10 @@ export default function LoginClient() {
                 color: '#FCA5A5',
               }}
             >
-              Your account has been deactivated. Please contact your restaurant manager.
+              {errorParam === 'account_inactive' && 'Your account has been deactivated. Please contact your restaurant manager.'}
+              {errorParam === 'auth_callback_failed' && (searchParams.get('details') || 'Authentication failed. Please try again.')}
+              {errorParam === 'missing_code' && !hashError && 'Invalid or missing authentication link.'}
+              {hashError && hashError}
             </div>
           )}
 
