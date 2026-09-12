@@ -30,10 +30,7 @@ export default async function DashboardLayout({
 
   // Fetch restaurants for the switcher
   let restaurants: any[] = []
-  if (profile.role === 'platform_admin') {
-    const { data: rests } = await supabase.from('restaurants').select('id, name').eq('is_active', true)
-    restaurants = rests || []
-  } else if (profile.role === 'owner') {
+  if (profile.role === 'owner' || profile.role === 'platform_admin') {
     const { data: ownerRaw } = await supabase.from('owners').select('id').eq('profile_id', user.id).single()
     const owner = ownerRaw as { id: string } | null
     if (owner) {
