@@ -85,6 +85,7 @@ export default function TablesPageClient({ tables: initialTables, branches, rest
         size: 300,
         darkColor: '#1A1A2E',
         lightColor: '#FFFFFF',
+        appUrl: typeof window !== 'undefined' ? window.location.origin : undefined
       })
       setQrDataUrl(dataUrl)
       setSelectedTable(table)
@@ -103,6 +104,7 @@ export default function TablesPageClient({ tables: initialTables, branches, rest
     const dataUrl = await generateQRDataUrl(activeQR.token, {
       size: 300,
       darkColor: '#1A1A2E',
+      appUrl: typeof window !== 'undefined' ? window.location.origin : undefined
     })
     setQrDataUrl(dataUrl)
     setSelectedTable(table)
@@ -256,7 +258,7 @@ export default function TablesPageClient({ tables: initialTables, branches, rest
                     textAlign: 'left',
                   }}
                 >
-                  {buildQRUrl(activeQR.token)}
+                  {buildQRUrl(activeQR.token, typeof window !== 'undefined' ? window.location.origin : undefined)}
                 </div>
               )}
 
@@ -266,7 +268,9 @@ export default function TablesPageClient({ tables: initialTables, branches, rest
                   className="btn btn-secondary flex-1"
                   onClick={() => {
                     if (activeQR) {
-                      downloadQRCode(activeQR.token, `table-${selectedTable.table_number}`)
+                      downloadQRCode(activeQR.token, `table-${selectedTable.table_number}`, {
+                        appUrl: typeof window !== 'undefined' ? window.location.origin : undefined
+                      })
                     }
                   }}
                 >
