@@ -35,9 +35,9 @@ export default async function BranchLayout({
         .select('branch_id')
         .eq('profile_id', user.id)
         .eq('restaurant_id', restaurantId)
-        .single()
+        .limit(1)
       
-      const staff = staffRaw as { branch_id: string | null } | null
+      const staff = (staffRaw as { branch_id: string | null }[] | null)?.[0] || null
       
       // If staff has a specific branch_id assigned, they can only access that branch
       if (staff?.branch_id && staff.branch_id !== branchId) {
