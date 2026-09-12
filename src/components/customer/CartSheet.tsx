@@ -69,15 +69,6 @@ export default function CartSheet({
       saveCustomer({ name: name.trim(), phone: phone.trim() })
     }
 
-    // Resolve table info from QR token
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: qrData } = await (supabase.rpc as any)('resolve_qr_token', { p_token: tableToken })
-    if (!qrData || qrData.error) {
-      setError('Unable to resolve table. Please try again.')
-      setIsPlacing(false)
-      return
-    }
-
     const itemsPayload = cart.items.map(item => ({
       menu_item_id: item.menuItemId,
       quantity: item.quantity,
@@ -92,10 +83,8 @@ export default function CartSheet({
 
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error: rpcError } = await (supabase.rpc as any)('create_order_secure', {
-        p_restaurant_id: qrData.restaurant.id,
-        p_branch_id: qrData.branch.id,
-        p_table_id: qrData.table.id,
+      const { data, error: rpcError } = await (supabase.rpc as any)('place_order_from_qr', {
+        p_qr_token: tableToken,
         p_table_session_id: null,
         p_customer_name: name.trim() || null,
         p_customer_phone: phone.trim() || null,

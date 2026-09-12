@@ -1,8 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { createClient } from '@/lib/supabase/client'
+import { useCustomerStorage } from '@/lib/hooks/useCustomerStorage'
 import type { QRResolution } from '@/lib/types/app.types'
 
 interface Props {
@@ -13,6 +15,38 @@ interface Props {
 export default function QRLandingClient({ resolution, tableToken }: Props) {
   const { restaurant, branch, table } = resolution
   const [isLoading, setIsLoading] = useState(false)
+
+  const supabase = createClient()
+  const { customerData } = useCustomerStorage(restaurant.id)
+  const [activeOrders, setActiveOrders] = useState<any[]>([])
+  const [isCheckingOrders, setIsCheckingOrders] = useState(false)
+  const [manualPhone, setManualPhone] = useState('')
+  const [showManualCheck, setShowManualCheck] = useState(false)
+
+  useEffect(() => {
+    if (customerData?.phone) {
+      checkOrders(customerData.phone)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [customerData?.phone])
+
+  const checkOrders = async (phoneToUse: string) => {
+    if (!phoneToUse.trim()) return
+    setIsCheckingOrders(true)
+    try {
+      const { data, error } = await (supabase.rpc as any)('get_active_orders_by_phone', {
+        p_restaurant_id: restaurant.id,
+        p_phone: phoneToUse.trim(),
+      })
+      if (!error && data) {
+        setActiveOrders(data as any[])
+      }
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setIsCheckingOrders(false)
+    }
+  }
 
   // Apply restaurant branding via CSS variables
   const brandStyle = {
@@ -195,6 +229,80 @@ export default function QRLandingClient({ resolution, tableToken }: Props) {
             <p style={{ fontSize: '0.85rem', opacity: 0.7 }}>
               We&apos;re currently not taking new orders. Please ask our staff for assistance.
             </p>
+          </div>
+        )}
+
+        {/* Order Recovery */}
+        {activeOrders.length > 0 ? (
+          <div style={{ marginTop: '32px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <p style={{ fontSize: '0.85rem', color: '#A3A3A3', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Your Active Orders
+            </p>
+            {activeOrders.map(order => (
+              <Link
+                key={order.order_token}
+                href={`/order/${order.order_token}`}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '16px 20px',
+                  background: 'rgba(255,255,255,0.05)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: '16px',
+                  color: 'white',
+                  textDecoration: 'none',
+                }}
+              >
+                <div style={{ textAlign: 'left' }}>
+                  <div style={{ fontWeight: 700, fontSize: '1rem', marginBottom: '4px' }}>
+                    Order #{order.order_number}
+                  </div>
+                  <div style={{ fontSize: '0.8rem', color: '#A3A3A3' }}>
+                    Status: <span style={{ color: '#22C55E', textTransform: 'capitalize' }}>{order.status.replace(/_/g, ' ')}</span>
+                  </div>
+                </div>
+                <div style={{ fontSize: '1.2rem' }}>→</div>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <div style={{ marginTop: '32px' }}>
+            {!showManualCheck ? (
+              <button
+                onClick={() => setShowManualCheck(true)}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'rgba(255,255,255,0.5)',
+                  fontSize: '0.85rem',
+                  textDecoration: 'underline',
+                  cursor: 'pointer',
+                }}
+              >
+                Track a previous order
+              </button>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', background: 'rgba(255,255,255,0.03)', padding: '16px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <p style={{ fontSize: '0.8rem', color: '#A3A3A3', textAlign: 'left', margin: 0 }}>Enter your phone number to find active orders.</p>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <input
+                    type="tel"
+                    placeholder="Phone number"
+                    value={manualPhone}
+                    onChange={e => setManualPhone(e.target.value)}
+                    style={{ flex: 1, padding: '10px 14px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: '#F5F5F5', fontSize: '0.9rem', outline: 'none' }}
+                  />
+                  <button
+                    onClick={() => checkOrders(manualPhone)}
+                    disabled={isCheckingOrders || !manualPhone.trim()}
+                    style={{ padding: '0 16px', background: restaurant.primary_color ?? '#FF6B35', color: 'white', border: 'none', borderRadius: '10px', fontWeight: 600, cursor: isCheckingOrders ? 'not-allowed' : 'pointer', opacity: isCheckingOrders || !manualPhone.trim() ? 0.7 : 1 }}
+                  >
+                    Check
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
