@@ -15,7 +15,8 @@ export default async function RestaurantLayout({
   if (!user) redirect('/auth/login')
 
   // Validate user has access to this restaurant
-  const { data: hasAccess, error } = await supabase.rpc('has_restaurant_access', { p_restaurant_id: restaurantId })
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: hasAccess, error } = await (supabase.rpc as any)('has_restaurant_access', { p_restaurant_id: restaurantId })
   if (error) console.error('Access check error:', error)
 
   if (!hasAccess) {
