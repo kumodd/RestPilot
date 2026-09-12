@@ -18,7 +18,7 @@ interface Order {
 
 interface Props {
   restaurantId: string
-  branchId: string | null
+  branchId: string
 }
 
 export default function CashierClient({ restaurantId, branchId }: Props) {

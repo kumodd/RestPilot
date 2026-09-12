@@ -36,9 +36,8 @@ export default function DashboardNav({ profile, user, restaurants }: Props) {
           .eq('is_active', true)
           .limit(1)
           .single()
-        
         if (data) {
-          setDefaultBranchId(data.id)
+          setDefaultBranchId((data as { id: string }).id)
         }
       }
       fetchFirstBranch()

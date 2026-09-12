@@ -34,7 +34,7 @@ const BOARD_COLUMNS: Array<{
 
 interface Props {
   restaurantId: string
-  branchId: string | null
+  branchId: string
 }
 
 export default function LiveOrderBoardClient({ restaurantId, branchId }: Props) {
