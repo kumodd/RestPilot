@@ -151,7 +151,7 @@ export default function HomePage() {
             {[
               { icon: '⏳', title: 'Waiting to order', desc: 'Customers sit, look around, and wait. Staff rush between tables.' },
               { icon: '📢', title: 'Manual communication', desc: 'Orders passed verbally from waiter to kitchen — prone to misunderstanding.' },
-              { icon: '🤷', title: 'No order visibility', desc: 'Once ordered, customers have no idea what's happening to their food.' },
+              { icon: '🤷', title: 'No order visibility', desc: 'Once ordered, customers have no idea what is happening to their food.' },
               { icon: '🔄', title: 'Coordination overhead', desc: 'Waiters spend time relaying kitchen status instead of serving.' },
             ].map(item => (
               <div key={item.title} style={{ padding: '20px', background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '16px' }}>
@@ -203,7 +203,7 @@ export default function HomePage() {
           <div>
             <SectionLabel>Live Order Tracking</SectionLabel>
             <h2 style={{ fontSize: 'clamp(1.5rem, 3vw, 2.2rem)', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: '16px' }}>
-              Customers see exactly what's happening.
+              Customers see exactly what is happening.
             </h2>
             <p style={{ color: '#737373', lineHeight: 1.8, fontSize: '0.95rem' }}>
               After placing an order, customers are shown a live tracking screen. Every step of the restaurant workflow is reflected in real-time — no need to ask a waiter for an update.
@@ -376,7 +376,7 @@ export default function HomePage() {
               One QR code per table. Always.
             </h2>
             <p style={{ color: '#737373', lineHeight: 1.8, marginBottom: '28px', fontSize: '0.95rem' }}>
-              Add your tables, generate unique QR codes for each, and download them for printing. When a customer scans, they're taken directly to your restaurant's menu.
+              Add your tables, generate unique QR codes for each, and download them for printing. When a customer scans, they are taken directly to your restaurant menu.
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {[
