@@ -1,0 +1,38 @@
+import type { Metadata } from 'next'
+import { Suspense } from 'react'
+import AcceptInviteClient from './AcceptInviteClient'
+import { validateInvitation } from '@/app/actions/invitation'
+
+export const metadata: Metadata = {
+  title: 'Accept Invitation — RestPilot',
+  description: 'Accept your invitation to join a RestPilot restaurant.',
+}
+
+export default async function AcceptInvitePage({ searchParams }: { searchParams: Promise<{ token?: string }> }) {
+  const params = await searchParams
+  const token = params.token
+
+  let inviteData = null
+  let errorMsg = null
+
+  if (!token) {
+    errorMsg = 'No invitation token provided.'
+  } else {
+    try {
+      inviteData = await validateInvitation(token)
+    } catch (e: any) {
+      errorMsg = e.message || 'Invalid or expired invitation.'
+    }
+  }
+
+  return (
+    <Suspense fallback={
+      <div style={{ minHeight: '100vh', background: '#0F0F1A', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ width: '32px', height: '32px', border: '2px solid rgba(255,255,255,0.1)', borderTopColor: '#FF6B35', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    }>
+      <AcceptInviteClient token={token || ''} inviteData={inviteData} errorMsg={errorMsg} />
+    </Suspense>
+  )
+}
