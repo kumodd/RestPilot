@@ -75,29 +75,31 @@ export async function updateSession(request: NextRequest) {
 
     // Waiter restrictions
     if (role === 'waiter') {
-      const allowedWaiterRoutes = ['/dashboard/orders', '/dashboard/tables']
-      // Let them access the root dashboard, but for specific sub-routes, restrict them
-      const isAllowed = pathname === '/dashboard' || allowedWaiterRoutes.some(route => pathname.startsWith(route))
+      const isAllowed = pathname === '/dashboard' || 
+        pathname.match(/^\/dashboard\/[^\/]+(\/)?$/) || 
+        pathname.match(/^\/dashboard\/[^\/]+\/[^\/]+\/(orders|tables)($|\/)/)
       if (!isAllowed) {
-        return NextResponse.redirect(new URL('/dashboard/orders', request.url))
+        return NextResponse.redirect(new URL('/dashboard', request.url))
       }
     }
 
     // Chef/Kitchen restrictions
     if (role === 'chef' || role === 'kitchen_manager') {
-      const allowedKitchenRoutes = ['/dashboard/kitchen']
-      const isAllowed = pathname === '/dashboard' || allowedKitchenRoutes.some(route => pathname.startsWith(route))
+      const isAllowed = pathname === '/dashboard' || 
+        pathname.match(/^\/dashboard\/[^\/]+(\/)?$/) || 
+        pathname.match(/^\/dashboard\/[^\/]+\/[^\/]+\/(kitchen)($|\/)/)
       if (!isAllowed) {
-        return NextResponse.redirect(new URL('/dashboard/kitchen', request.url))
+        return NextResponse.redirect(new URL('/dashboard', request.url))
       }
     }
     
     // Cashier restrictions
     if (role === 'cashier') {
-      const allowedCashierRoutes = ['/dashboard/cashier', '/dashboard/orders']
-      const isAllowed = pathname === '/dashboard' || allowedCashierRoutes.some(route => pathname.startsWith(route))
+      const isAllowed = pathname === '/dashboard' || 
+        pathname.match(/^\/dashboard\/[^\/]+(\/)?$/) || 
+        pathname.match(/^\/dashboard\/[^\/]+\/[^\/]+\/(cashier|orders)($|\/)/)
       if (!isAllowed) {
-        return NextResponse.redirect(new URL('/dashboard/cashier', request.url))
+        return NextResponse.redirect(new URL('/dashboard', request.url))
       }
     }
   }
