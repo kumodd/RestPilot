@@ -70,21 +70,24 @@ export default function DashboardNav({ profile, user, restaurants }: Props) {
     // Operations links require a branchId
     const bBase = branchId ? `/dashboard/${restaurantId}/${branchId}` : '#'
 
-    return [
-      { label: 'Overview', href: `${base}`, icon: '🏠', exact: true },
+    const items = [
+      { label: 'Overview', href: `${base}`, icon: '🏠', exact: true, roles: ['all'] },
       ...(branchId ? [
-        { label: 'Live Orders', href: `${bBase}/orders`, icon: '📊' },
-        { label: 'Kitchen Display', href: `${bBase}/kitchen`, icon: '👨‍🍳' },
-        { label: 'Tables & QR', href: `${bBase}/tables`, icon: '🪑' },
-        { label: 'Cashier', href: `${bBase}/cashier`, icon: '💰' },
-        { label: 'Reports', href: `${bBase}/reports`, icon: '📈' },
+        { label: 'Live Orders', href: `${bBase}/orders`, icon: '📊', roles: ['owner', 'platform_admin', 'manager', 'waiter', 'cashier'] },
+        { label: 'Kitchen Display', href: `${bBase}/kitchen`, icon: '👨‍🍳', roles: ['owner', 'platform_admin', 'manager', 'chef', 'kitchen_manager'] },
+        { label: 'Tables & QR', href: `${bBase}/tables`, icon: '🪑', roles: ['owner', 'platform_admin', 'manager', 'waiter'] },
+        { label: 'Cashier', href: `${bBase}/cashier`, icon: '💰', roles: ['owner', 'platform_admin', 'manager', 'cashier'] },
+        { label: 'Reports', href: `${bBase}/reports`, icon: '📈', roles: ['owner', 'platform_admin', 'manager'] },
       ] : []),
       
-      { label: 'Menu', href: `${base}/menu`, icon: '🍽️', section: 'Management' },
-      { label: 'Staff', href: `${base}/staff`, icon: '👥', section: 'Management' },
-      { label: 'Suggestions', href: `${base}/suggestions`, icon: '💡', section: 'Management' },
-      { label: 'Settings', href: `${base}/settings`, icon: '⚙️', section: 'Management' },
+      { label: 'Menu', href: `${base}/menu`, icon: '🍽️', section: 'Management', roles: ['owner', 'platform_admin', 'manager'] },
+      { label: 'Staff', href: `${base}/staff`, icon: '👥', section: 'Management', roles: ['owner', 'platform_admin', 'manager'] },
+      { label: 'Suggestions', href: `${base}/suggestions`, icon: '💡', section: 'Management', roles: ['owner', 'platform_admin', 'manager'] },
+      { label: 'Settings', href: `${base}/settings`, icon: '⚙️', section: 'Management', roles: ['owner', 'platform_admin', 'manager'] },
     ]
+
+    const userRole = profile.role || 'waiter'
+    return items.filter(item => item.roles.includes('all') || item.roles.includes(userRole))
   }
 
   const navItems = getNavItems()

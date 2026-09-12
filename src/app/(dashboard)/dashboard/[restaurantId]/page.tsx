@@ -68,6 +68,20 @@ export default async function RestaurantOverviewPage({ params }: { params: Promi
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const defaultBranchId = (branchesRaw as any[])?.[0]?.id || 'unknown'
 
+  const { data: profileRaw } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  const userRole = (profileRaw as { role: string } | null)?.role || 'waiter'
+
+  const allActions = [
+    { label: 'Live Orders', icon: '📊', href: `/dashboard/${restaurantId}/${defaultBranchId}/orders`, color: '#3B82F6', roles: ['owner', 'platform_admin', 'manager', 'waiter', 'cashier'] },
+    { label: 'Manage Menu', icon: '🍽️', href: `/dashboard/${restaurantId}/menu`, color: '#FF6B35', roles: ['owner', 'platform_admin', 'manager'] },
+    { label: 'Tables & QR', icon: '🪑', href: `/dashboard/${restaurantId}/${defaultBranchId}/tables`, color: '#8B5CF6', roles: ['owner', 'platform_admin', 'manager', 'waiter'] },
+    { label: 'Staff', icon: '👥', href: `/dashboard/${restaurantId}/staff`, color: '#22C55E', roles: ['owner', 'platform_admin', 'manager'] },
+    { label: 'Suggestions', icon: '💡', href: `/dashboard/${restaurantId}/suggestions`, color: '#F59E0B', roles: ['owner', 'platform_admin', 'manager'] },
+    { label: 'Reports', icon: '📈', href: `/dashboard/${restaurantId}/${defaultBranchId}/reports`, color: '#EC4899', roles: ['owner', 'platform_admin', 'manager'] },
+  ]
+
+  const permittedActions = allActions.filter(action => action.roles.includes(userRole))
+
   return (
     <main className="page-content">
       {/* Page header */}
@@ -125,14 +139,7 @@ export default async function RestaurantOverviewPage({ params }: { params: Promi
           Quick Actions
         </h2>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px' }}>
-          {[
-            { label: 'Live Orders', icon: '📊', href: `/dashboard/${restaurantId}/${defaultBranchId}/orders`, color: '#3B82F6' },
-            { label: 'Manage Menu', icon: '🍽️', href: `/dashboard/${restaurantId}/menu`, color: '#FF6B35' },
-            { label: 'Tables & QR', icon: '🪑', href: `/dashboard/${restaurantId}/${defaultBranchId}/tables`, color: '#8B5CF6' },
-            { label: 'Staff', icon: '👥', href: `/dashboard/${restaurantId}/staff`, color: '#22C55E' },
-            { label: 'Suggestions', icon: '💡', href: `/dashboard/${restaurantId}/suggestions`, color: '#F59E0B' },
-            { label: 'Reports', icon: '📈', href: `/dashboard/${restaurantId}/${defaultBranchId}/reports`, color: '#EC4899' },
-          ].map(link => (
+          {permittedActions.map(link => (
             <a
               key={link.label}
               href={link.href}
