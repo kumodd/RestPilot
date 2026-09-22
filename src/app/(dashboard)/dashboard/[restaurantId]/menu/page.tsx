@@ -62,6 +62,13 @@ export default async function MenuPage({ params }: { params: Promise<{ restauran
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
 
+  // The server-side check controls the write surface. RLS remains the
+  // authoritative enforcement for every direct menu mutation.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: canManageMenu } = await (supabase.rpc as any)('is_restaurant_manager', {
+    p_restaurant_id: restaurantId,
+  })
+
   const { data: categoriesRaw } = await supabase
     .from('menu_categories')
     .select(`
@@ -84,7 +91,7 @@ export default async function MenuPage({ params }: { params: Promise<{ restauran
     <MenuEditorClient
       categories={categories}
       restaurantId={restaurantId}
+      canManageMenu={canManageMenu === true}
     />
   )
 }
-

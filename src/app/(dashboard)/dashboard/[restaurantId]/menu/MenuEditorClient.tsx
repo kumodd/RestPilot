@@ -1,16 +1,13 @@
 'use client'
 
 import { useState, useCallback } from 'react'
+import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { formatPrice } from '@/lib/utils/price'
 import { DIETARY_LABELS } from '@/lib/types/app.types'
 import CategoryFormModal from './CategoryFormModal'
 import ItemFormModal from './ItemFormModal'
-
-interface VariantOption {
-  name: string
-  price_delta: number
-}
+import MenuImportPanel from './MenuImportPanel'
 
 interface VariantRow {
   id: string
@@ -63,6 +60,7 @@ interface CategoryRow {
 interface Props {
   categories: CategoryRow[]
   restaurantId: string
+  canManageMenu: boolean
 }
 
 type ModalState =
@@ -72,7 +70,7 @@ type ModalState =
   | { type: 'add_item'; categoryId: string }
   | { type: 'edit_item'; item: MenuItemRow }
 
-export default function MenuEditorClient({ categories: initial, restaurantId }: Props) {
+export default function MenuEditorClient({ categories: initial, restaurantId, canManageMenu }: Props) {
   const supabase = createClient()
   const [categories, setCategories] = useState<CategoryRow[]>(initial)
   const [modal, setModal] = useState<ModalState>({ type: 'none' })
@@ -102,7 +100,8 @@ export default function MenuEditorClient({ categories: initial, restaurantId }: 
   const toggleCategory = (catId: string) => {
     setExpandedCats(prev => {
       const next = new Set(prev)
-      next.has(catId) ? next.delete(catId) : next.add(catId)
+      if (next.has(catId)) next.delete(catId)
+      else next.add(catId)
       return next
     })
   }
@@ -148,24 +147,42 @@ export default function MenuEditorClient({ categories: initial, restaurantId }: 
   const activeItems = categories.reduce((acc, c) => acc + c.menu_items.filter(i => i.is_available).length, 0)
 
   return (
-    <main className="page-content" style={{ maxWidth: '900px' }}>
+    <main className="page-content" style={{ maxWidth: '1180px' }}>
       {/* Header */}
       <div className="page-header">
         <div>
-          <h1 className="page-title">Menu Management</h1>
+          <div style={{ color: '#FF8C5A', fontSize: '0.72rem', fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: '8px' }}>Menu studio</div>
+          <h1 className="page-title">Build a menu people want to order</h1>
           <p className="page-subtitle">
-            {categories.length} categories · {totalItems} items · {activeItems} available
+            Keep your digital menu accurate, attractive, and ready for QR ordering.
           </p>
         </div>
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <button
-            className="btn btn-secondary"
-            onClick={() => setModal({ type: 'add_category' })}
-          >
-            + Category
-          </button>
-        </div>
+        {canManageMenu && <button className="btn btn-primary" onClick={() => setModal({ type: 'add_category' })}>+ Add category</button>}
       </div>
+
+      <div className="stats-grid" style={{ marginBottom: '26px' }}>
+        {[
+          { label: 'Categories', value: categories.length, icon: '▦', color: '#A78BFA' },
+          { label: 'Menu items', value: totalItems, icon: '✦', color: '#FF8C5A' },
+          { label: 'Available now', value: activeItems, icon: '●', color: '#4ADE80' },
+          { label: 'Needs attention', value: totalItems - activeItems, icon: '!', color: '#FCD34D' },
+        ].map(stat => (
+          <div key={stat.label} className="stat-card" style={{ '--stat-color': stat.color } as React.CSSProperties}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div><div className="stat-value">{stat.value}</div><div className="stat-label">{stat.label}</div></div>
+              <span style={{ width: '38px', height: '38px', display: 'grid', placeItems: 'center', borderRadius: '12px', color: stat.color, background: `${stat.color}18`, fontWeight: 800 }}>{stat.icon}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {canManageMenu ? (
+        <MenuImportPanel restaurantId={restaurantId} onApplied={refreshData} />
+      ) : (
+        <div style={{ marginBottom: '22px', padding: '13px 16px', border: '1px solid rgba(255,255,255,0.09)', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', color: '#A3A3A3', fontSize: '0.8rem' }}>
+          👀 You’re viewing this menu in read-only mode. Ask the restaurant owner or manager to make changes.
+        </div>
+      )}
 
       {/* Search */}
       <div style={{ marginBottom: '20px' }}>
@@ -276,7 +293,7 @@ export default function MenuEditorClient({ categories: initial, restaurantId }: 
                     style={{ display: 'flex', gap: '6px' }}
                     onClick={e => e.stopPropagation()}
                   >
-                    <button
+                    {canManageMenu && <button
                       onClick={() => setModal({ type: 'add_item', categoryId: cat.id })}
                       style={{
                         padding: '5px 12px',
@@ -291,8 +308,8 @@ export default function MenuEditorClient({ categories: initial, restaurantId }: 
                       }}
                     >
                       + Item
-                    </button>
-                    <button
+                    </button>}
+                    {canManageMenu && <button
                       onClick={() => toggleCategoryAvailability(cat)}
                       title={cat.is_available ? 'Hide category' : 'Show category'}
                       style={{
@@ -306,8 +323,8 @@ export default function MenuEditorClient({ categories: initial, restaurantId }: 
                       }}
                     >
                       {cat.is_available ? '👁' : '🚫'}
-                    </button>
-                    <button
+                    </button>}
+                    {canManageMenu && <button
                       onClick={() => setModal({ type: 'edit_category', category: cat })}
                       style={{
                         padding: '5px 10px',
@@ -320,8 +337,8 @@ export default function MenuEditorClient({ categories: initial, restaurantId }: 
                       }}
                     >
                       ✏️
-                    </button>
-                    <button
+                    </button>}
+                    {canManageMenu && <button
                       onClick={() => deleteCategory(cat.id)}
                       style={{
                         padding: '5px 10px',
@@ -334,7 +351,7 @@ export default function MenuEditorClient({ categories: initial, restaurantId }: 
                       }}
                     >
                       🗑
-                    </button>
+                    </button>}
                   </div>
                 </div>
 
@@ -346,12 +363,12 @@ export default function MenuEditorClient({ categories: initial, restaurantId }: 
                         <p style={{ color: '#525252', fontSize: '0.85rem', marginBottom: '12px' }}>
                           No items in this category yet
                         </p>
-                        <button
+                        {canManageMenu && <button
                           className="btn btn-secondary btn-sm"
                           onClick={() => setModal({ type: 'add_item', categoryId: cat.id })}
                         >
                           + Add First Item
-                        </button>
+                        </button>}
                       </div>
                     ) : (
                       cat.menu_items
@@ -396,7 +413,7 @@ export default function MenuEditorClient({ categories: initial, restaurantId }: 
                                 position: 'relative'
                               }}>
                                 {item.image_url ? (
-                                  <img src={item.image_url} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                  <Image src={item.image_url} alt={item.name} width={48} height={48} unoptimized style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                 ) : (
                                   <span style={{ fontSize: '1.2rem', opacity: 0.5 }}>🍲</span>
                                 )}
@@ -429,7 +446,7 @@ export default function MenuEditorClient({ categories: initial, restaurantId }: 
                               </div>
 
                               {/* Actions */}
-                              <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
+                              {canManageMenu && <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
                                 {/* Toggle available */}
                                 <button
                                   onClick={() => toggleItemAvailability(item)}
@@ -486,7 +503,7 @@ export default function MenuEditorClient({ categories: initial, restaurantId }: 
                                 >
                                   🗑
                                 </button>
-                              </div>
+                              </div>}
                             </div>
                           )
                         })

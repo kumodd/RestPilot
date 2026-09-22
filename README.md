@@ -16,6 +16,19 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+## AI menu import
+
+Restaurant owners and managers can open Dashboard → Menu, upload a clear JPG, PNG, or WebP menu photo, review the extracted categories and prices, and save the approved menu into Supabase.
+
+Set these server-only variables before using the importer:
+
+```bash
+OPENAI_API_KEY=your_openai_api_key
+OPENAI_MENU_MODEL=gpt-4o-mini
+```
+
+Apply Supabase migration `020_menu_imports.sql` before enabling the feature. The source image is stored privately in the `menu-imports` bucket; it is never exposed to the customer menu.
+
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
