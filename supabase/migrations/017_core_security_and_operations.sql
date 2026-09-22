@@ -370,6 +370,11 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- Status and item changes must go through the authoritative functions.
+REVOKE EXECUTE ON FUNCTION has_branch_access(UUID, UUID) FROM anon;
+GRANT EXECUTE ON FUNCTION has_branch_access(UUID, UUID) TO authenticated;
+REVOKE EXECUTE ON FUNCTION is_restaurant_manager(UUID) FROM anon;
+GRANT EXECUTE ON FUNCTION is_restaurant_manager(UUID) TO authenticated;
+
 DROP POLICY IF EXISTS "orders_update_staff" ON orders;
 CREATE POLICY "orders_update_via_rpc_only"
   ON orders FOR UPDATE
