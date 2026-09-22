@@ -70,11 +70,11 @@ export default function QRLandingClient({ resolution, tableToken }: Props) {
 
   return (
     <div
-      className="theme-customer"
+      className="theme-customer customer-landing-page"
       style={{
         ...brandStyle,
         minHeight: '100vh',
-        background: `linear-gradient(180deg, ${restaurant.secondary_color ?? '#1A1A2E'} 0%, #0F0F1A 100%)`,
+        background: '#F7F7F8',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -142,7 +142,7 @@ export default function QRLandingClient({ resolution, tableToken }: Props) {
           style={{
             fontSize: '1.8rem',
             fontWeight: 800,
-            color: '#F5F5F5',
+            color: '#171717',
             marginBottom: '6px',
             letterSpacing: '-0.02em',
           }}
@@ -150,7 +150,7 @@ export default function QRLandingClient({ resolution, tableToken }: Props) {
           {restaurant.name}
         </h1>
 
-        <p style={{ fontSize: '0.95rem', color: 'rgba(255,255,255,0.55)', marginBottom: '32px' }}>
+        <p style={{ fontSize: '0.95rem', color: '#737373', marginBottom: '32px' }}>
           {branch.name}
           {branch.city ? ` · ${branch.city}` : ''}
         </p>
@@ -161,24 +161,24 @@ export default function QRLandingClient({ resolution, tableToken }: Props) {
             display: 'inline-flex',
             alignItems: 'center',
             gap: '10px',
-            background: 'rgba(255,255,255,0.08)',
+            background: '#FFFFFF',
             backdropFilter: 'blur(12px)',
-            border: '1px solid rgba(255,255,255,0.15)',
+            border: '1px solid rgba(23,23,23,0.08)',
             borderRadius: '999px',
             padding: '10px 20px',
             marginBottom: '48px',
           }}
         >
           <span style={{ fontSize: '1.3rem' }}>🪑</span>
-          <span style={{ fontSize: '0.95rem', fontWeight: 700, color: '#F5F5F5' }}>
+          <span style={{ fontSize: '0.95rem', fontWeight: 800, color: '#262626' }}>
             {table.display_name ?? `Table ${table.table_number}`}
           </span>
           {table.section && (
             <span
               style={{
                 fontSize: '0.75rem',
-                color: 'rgba(255,255,255,0.4)',
-                background: 'rgba(255,255,255,0.06)',
+                color: '#737373',
+                background: '#F4F4F5',
                 padding: '2px 8px',
                 borderRadius: '999px',
               }}
@@ -229,7 +229,7 @@ export default function QRLandingClient({ resolution, tableToken }: Props) {
                 </>
               )}
             </Link>
-            <p style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.45)', marginTop: '12px' }}>
+            <p style={{ fontSize: '0.78rem', color: '#737373', marginTop: '12px' }}>
               No app or account required · order from your table
             </p>
           </>
@@ -270,12 +270,12 @@ export default function QRLandingClient({ resolution, tableToken }: Props) {
                 style={{
                   padding: '12px 6px',
                   borderRadius: '12px',
-                  background: 'rgba(255,255,255,0.04)',
-                  border: '1px solid rgba(255,255,255,0.07)',
+                  background: '#FFFFFF',
+                  border: '1px solid rgba(23,23,23,0.06)',
                 }}
               >
                 <div style={{ fontSize: '1.05rem', marginBottom: '5px' }}>{icon}</div>
-                <div style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.58)', lineHeight: 1.2 }}>{label}</div>
+                <div style={{ fontSize: '0.68rem', color: '#737373', lineHeight: 1.2 }}>{label}</div>
               </div>
             ))}
           </div>
@@ -284,7 +284,7 @@ export default function QRLandingClient({ resolution, tableToken }: Props) {
         {/* Order Recovery */}
         {activeOrders.length > 0 ? (
           <div style={{ marginTop: '32px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <p style={{ fontSize: '0.85rem', color: '#A3A3A3', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <p style={{ fontSize: '0.85rem', color: '#737373', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               Your Active Orders
             </p>
             {activeOrders.map(order => (
@@ -296,10 +296,10 @@ export default function QRLandingClient({ resolution, tableToken }: Props) {
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   padding: '16px 20px',
-                  background: 'rgba(255,255,255,0.05)',
-                  border: '1px solid rgba(255,255,255,0.1)',
+                  background: '#FFFFFF',
+                  border: '1px solid rgba(23,23,23,0.08)',
                   borderRadius: '16px',
-                  color: 'white',
+                  color: '#171717',
                   textDecoration: 'none',
                 }}
               >
@@ -307,7 +307,7 @@ export default function QRLandingClient({ resolution, tableToken }: Props) {
                   <div style={{ fontWeight: 700, fontSize: '1rem', marginBottom: '4px' }}>
                     Order #{order.order_number}
                   </div>
-                  <div style={{ fontSize: '0.8rem', color: '#A3A3A3' }}>
+                  <div style={{ fontSize: '0.8rem', color: '#737373' }}>
                     Status: <span style={{ color: '#22C55E', textTransform: 'capitalize' }}>{order.status.replace(/_/g, ' ')}</span>
                   </div>
                 </div>
@@ -323,7 +323,7 @@ export default function QRLandingClient({ resolution, tableToken }: Props) {
                 style={{
                   background: 'transparent',
                   border: 'none',
-                  color: 'rgba(255,255,255,0.5)',
+                  color: '#737373',
                   fontSize: '0.85rem',
                   textDecoration: 'underline',
                   cursor: 'pointer',
@@ -332,15 +332,15 @@ export default function QRLandingClient({ resolution, tableToken }: Props) {
                 Track a previous order
               </button>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', background: 'rgba(255,255,255,0.03)', padding: '16px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.06)' }}>
-                <p style={{ fontSize: '0.8rem', color: '#A3A3A3', textAlign: 'left', margin: 0 }}>Enter your phone number to find active orders.</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', background: '#FFFFFF', padding: '16px', borderRadius: '16px', border: '1px solid rgba(23,23,23,0.06)' }}>
+                <p style={{ fontSize: '0.8rem', color: '#737373', textAlign: 'left', margin: 0 }}>Enter your phone number to find active orders.</p>
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <input
                     type="tel"
                     placeholder="Phone number"
                     value={manualPhone}
                     onChange={e => setManualPhone(e.target.value)}
-                    style={{ flex: 1, padding: '10px 14px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: '#F5F5F5', fontSize: '0.9rem', outline: 'none' }}
+                    style={{ flex: 1, padding: '10px 14px', background: '#F7F7F8', border: '1px solid rgba(23,23,23,0.12)', borderRadius: '10px', color: '#171717', fontSize: '0.9rem', outline: 'none' }}
                   />
                   <button
                     onClick={() => checkOrders(manualPhone)}
@@ -360,7 +360,7 @@ export default function QRLandingClient({ resolution, tableToken }: Props) {
           style={{
             marginTop: '32px',
             fontSize: '0.72rem',
-            color: 'rgba(255,255,255,0.25)',
+            color: '#A3A3A3',
             letterSpacing: '0.04em',
           }}
         >

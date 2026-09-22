@@ -126,6 +126,7 @@ export default function ItemCustomizer({ item, restaurant, onClose, onAddToCart 
 
       {/* Bottom Sheet */}
       <div
+        className="customer-item-customizer"
         style={{
           position: 'fixed',
           bottom: 0,

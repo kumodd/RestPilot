@@ -8,6 +8,7 @@ import { ORDER_STATUS_CONFIG } from '@/lib/types/app.types'
 import type { OrderStatus } from '@/lib/types/database.types'
 import { format } from 'date-fns'
 import { useEffect, useRef, useState } from 'react'
+import CustomerBottomNav from '@/components/customer/CustomerBottomNav'
 
 type ServiceRequestType = 'waiter' | 'water' | 'cutlery' | 'cleaning'
 
@@ -249,11 +250,12 @@ export default function OrderTrackingClient({ orderToken }: Props) {
   const isCancelled = order.status === 'cancelled' || order.status === 'rejected'
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0F0F1A' }}>
+    <div className="customer-tracking-page" style={{ minHeight: '100vh', background: '#F7F7F8', paddingBottom: tableToken ? '86px' : 0 }}>
       {/* Hero */}
       <div
+        className="customer-tracking-hero"
         style={{
-          background: 'linear-gradient(135deg, #1A1A2E 0%, #242438 100%)',
+          background: '#FFFFFF',
           padding: '40px 20px 32px',
           textAlign: 'center',
           borderBottom: '1px solid rgba(255,255,255,0.06)',
@@ -366,7 +368,7 @@ export default function OrderTrackingClient({ orderToken }: Props) {
 
       {!isCancelled && !isTerminal && (
         <section style={{ padding: '20px 20px 0' }}>
-          <div style={{ padding: '16px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '16px' }}>
+          <div className="customer-tracking-card" style={{ padding: '16px', background: '#FFFFFF', border: '1px solid rgba(23,23,23,0.06)', borderRadius: '16px' }}>
             <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: '12px', marginBottom: '12px' }}>
               <div>
                 <h2 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#F5F5F5' }}>Need anything?</h2>
@@ -460,6 +462,7 @@ export default function OrderTrackingClient({ orderToken }: Props) {
                   {/* Content */}
                   <div style={{ flex: 1, paddingTop: '10px' }}>
                     <p
+                      className="customer-tracking-step-title"
                       style={{
                         fontWeight: state === 'pending' ? 400 : 600,
                         color: state === 'pending' ? '#525252' : '#F5F5F5',
@@ -492,18 +495,19 @@ export default function OrderTrackingClient({ orderToken }: Props) {
             return (
             <div
               key={item.id}
+              className="customer-tracking-card"
               style={{
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 padding: '12px',
-                background: 'rgba(255,255,255,0.03)',
+                background: '#FFFFFF',
                 borderRadius: '10px',
-                border: '1px solid rgba(255,255,255,0.05)',
+                border: '1px solid rgba(23,23,23,0.06)',
               }}
             >
               <div>
-                <span style={{ fontWeight: 600, color: '#F5F5F5', fontSize: '0.9rem' }}>
+                <span className="customer-tracking-item-title" style={{ fontWeight: 700, color: '#171717', fontSize: '0.9rem' }}>
                   {isEditingOrder ? draftQuantity : item.quantity}× {item.name}
                 </span>
                 {item.special_instructions && (
@@ -569,8 +573,8 @@ export default function OrderTrackingClient({ orderToken }: Props) {
       <div style={{ padding: '0 20px 20px' }}>
         <div
           style={{
-            background: 'rgba(255,255,255,0.03)',
-            border: '1px solid rgba(255,255,255,0.06)',
+            background: '#FFFFFF',
+            border: '1px solid rgba(23,23,23,0.06)',
             borderRadius: '16px',
             padding: '16px',
           }}
@@ -612,7 +616,7 @@ export default function OrderTrackingClient({ orderToken }: Props) {
 
       {isTerminal && !isCancelled && (
         <div style={{ padding: '0 20px 20px' }}>
-          <div style={{ padding: '16px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '16px' }}>
+          <div className="customer-tracking-card" style={{ padding: '16px', background: '#FFFFFF', border: '1px solid rgba(23,23,23,0.06)', borderRadius: '16px' }}>
             <h2 style={{ fontSize: '0.82rem', fontWeight: 700, color: '#A3A3A3', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '12px' }}>How was your visit?</h2>
             {feedbackSubmitted ? <p style={{ color: '#86EFAC', fontSize: '0.85rem' }}>Thanks for helping the restaurant improve.</p> : <>
               <div style={{ display: 'flex', gap: '6px', marginBottom: '10px' }}>{[1, 2, 3, 4, 5].map(value => <button type="button" key={value} onClick={() => setFeedbackRating(value)} aria-label={`${value} stars`} style={{ border: 'none', background: 'transparent', color: value <= feedbackRating ? '#F59E0B' : '#525252', fontSize: '1.5rem', cursor: 'pointer' }}>★</button>)}</div>
@@ -662,6 +666,7 @@ export default function OrderTrackingClient({ orderToken }: Props) {
           50% { box-shadow: 0 0 20px rgba(255,107,53,0.6); }
         }
       `}</style>
+      {tableToken && <CustomerBottomNav tableToken={tableToken} active="orders" orderToken={orderToken} cartHref={`/t/${tableToken}/menu?order=${encodeURIComponent(orderToken)}`} />}
     </div>
   )
 }

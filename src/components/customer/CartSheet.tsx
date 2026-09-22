@@ -134,6 +134,7 @@ export default function CartSheet({
 
       {/* Sheet */}
       <div
+        className="customer-cart-sheet"
         style={{
           position: 'fixed',
           bottom: 0,
