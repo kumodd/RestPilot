@@ -41,14 +41,14 @@ RETURNS TRIGGER AS $$
 BEGIN
   -- If this update comes directly from the client (not via a SECURITY DEFINER RPC)
   IF current_user IN ('authenticated', 'anon') THEN
-    NEW.status = OLD.status;
-    NEW.total = OLD.total;
-    NEW.subtotal = OLD.subtotal;
-    NEW.tax = OLD.tax;
-    NEW.service_charge = OLD.service_charge;
-    NEW.order_number = OLD.order_number;
-    NEW.restaurant_id = OLD.restaurant_id;
-    NEW.branch_id = OLD.branch_id;
+    NEW.status := OLD.status;
+    NEW.total := OLD.total;
+    NEW.subtotal := OLD.subtotal;
+    NEW.tax := OLD.tax;
+    NEW.service_charge := OLD.service_charge;
+    NEW.order_number := OLD.order_number;
+    NEW.restaurant_id := OLD.restaurant_id;
+    NEW.branch_id := OLD.branch_id;
   END IF;
   RETURN NEW;
 END;
@@ -68,11 +68,11 @@ BEGIN
   -- If this update comes directly from the client (e.g., KDS updating status)
   IF current_user IN ('authenticated', 'anon') THEN
     -- Protect financial and identity fields
-    NEW.price = OLD.price;
-    NEW.line_total = OLD.line_total;
-    NEW.quantity = OLD.quantity;
-    NEW.order_id = OLD.order_id;
-    NEW.menu_item_id = OLD.menu_item_id;
+    NEW.unit_price_snapshot := OLD.unit_price_snapshot;
+    NEW.line_total := OLD.line_total;
+    NEW.quantity := OLD.quantity;
+    NEW.order_id := OLD.order_id;
+    NEW.menu_item_id := OLD.menu_item_id;
     
     -- State machine validation for order_items
     IF NEW.status != OLD.status THEN
@@ -141,7 +141,7 @@ BEGIN
   INSERT INTO payments (
     order_id, restaurant_id, status, method, amount, external_reference, notes, processed_by, processed_at
   ) VALUES (
-    p_order_id, v_order.restaurant_id, 'completed', p_method, p_amount, p_external_reference, p_notes, v_actor_id, NOW()
+    p_order_id, v_order.restaurant_id, 'paid', p_method, p_amount, p_external_reference, p_notes, v_actor_id, NOW()
   ) RETURNING id INTO v_payment_id;
   
   -- 3. Transition the order status securely via internal RPC call

@@ -23,16 +23,11 @@ class NotificationsRemoteDataSourceImpl implements NotificationsRemoteDataSource
     required String branchId,
     required String profileId,
   }) async {
-    // The policy for notifications table usually restricts reading to:
-    // 1. Notifications explicitly assigned to the profileId
-    // 2. Notifications assigned to the branchId/restaurantId where profileId is null (broadcasts)
-    // We fetch everything visible to this user for this context.
     final data = await withRetry(() => supabase
         .from('notifications')
-        .select('*')
+        .select('id, restaurant_id, recipient_id, title, body, action_url, is_read, created_at')
         .eq('restaurant_id', restaurantId)
-        .or('branch_id.is.null,branch_id.eq.$branchId')
-        .or('profile_id.is.null,profile_id.eq.$profileId')
+        .eq('recipient_id', profileId)
         .order('created_at', ascending: false)
         .limit(50)); // Last 50 notifications
 
@@ -41,10 +36,10 @@ class NotificationsRemoteDataSourceImpl implements NotificationsRemoteDataSource
       return AppNotification(
         id: n['id'] as String,
         restaurantId: n['restaurant_id'] as String,
-        branchId: n['branch_id'] as String?,
-        profileId: n['profile_id'] as String?,
+        branchId: branchId,
+        profileId: n['recipient_id'] as String?,
         title: n['title'] as String,
-        message: n['message'] as String,
+        message: n['body'] as String? ?? '',
         actionUrl: n['action_url'] as String?,
         isRead: n['is_read'] as bool? ?? false,
         createdAt: n['created_at'] as String,
@@ -54,9 +49,11 @@ class NotificationsRemoteDataSourceImpl implements NotificationsRemoteDataSource
 
   @override
   Future<void> markNotificationRead(String notificationId) async {
-    await withRetry(() => supabase
-        .from('notifications')
-        .update({'is_read': true})
-        .eq('id', notificationId));
+    final result = await withRetry(() => supabase.rpc('mark_notification_read', params: {
+      'p_notification_id': notificationId,
+    }));
+    if (result is Map && result['error'] != null) {
+      throw ServerFailure(result['error'] as String, code: 'mark_notification_read');
+    }
   }
 }

@@ -9,11 +9,11 @@ interface RestaurantRow {
   slug: string
   description: string | null
   logo_url: string | null
-  currency_code: string
+  currency: string
   currency_symbol: string
   phone: string | null
   email: string | null
-  website: string | null
+  website_url: string | null
 }
 
 interface SettingsRow {
@@ -90,9 +90,9 @@ export default function SettingsClient({ restaurant, settings, restaurantId }: P
   const [description, setDescription] = useState(restaurant?.description ?? '')
   const [phone, setPhone] = useState(restaurant?.phone ?? '')
   const [email, setEmail] = useState(restaurant?.email ?? '')
-  const [website, setWebsite] = useState(restaurant?.website ?? '')
+  const [website, setWebsite] = useState(restaurant?.website_url ?? '')
   const [currencySymbol, setCurrencySymbol] = useState(restaurant?.currency_symbol ?? '₹')
-  const [currencyCode, setCurrencyCode] = useState(restaurant?.currency_code ?? 'INR')
+  const [currencyCode, setCurrencyCode] = useState(restaurant?.currency ?? 'INR')
 
   // Workflow settings
   const [waiterVerify, setWaiterVerify] = useState(settings?.waiter_verification_required ?? true)
@@ -124,17 +124,23 @@ export default function SettingsClient({ restaurant, settings, restaurantId }: P
     setIsSaving(true)
     setSaveMsg(null)
 
-    // Update restaurant
+    // Update restaurant using the actual database column names.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase.from('restaurants') as any).update({
+    const { error: restaurantError } = await (supabase.from('restaurants') as any).update({
       name: name.trim(),
       description: description.trim() || null,
       phone: phone.trim() || null,
       email: email.trim() || null,
-      website: website.trim() || null,
+      website_url: website.trim() || null,
       currency_symbol: currencySymbol,
-      currency_code: currencyCode,
+      currency: currencyCode,
     }).eq('id', restaurantId)
+
+    if (restaurantError) {
+      setSaveMsg(`Unable to save restaurant details: ${restaurantError.message}`)
+      setIsSaving(false)
+      return
+    }
 
     const settingsPayload = {
       restaurant_id: restaurantId,
@@ -158,10 +164,20 @@ export default function SettingsClient({ restaurant, settings, restaurantId }: P
 
     if (settings?.id) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (supabase.from('restaurant_settings') as any).update(settingsPayload).eq('id', settings.id)
+      const { error } = await (supabase.from('restaurant_settings') as any).update(settingsPayload).eq('id', settings.id)
+      if (error) {
+        setSaveMsg(`Unable to save workflow settings: ${error.message}`)
+        setIsSaving(false)
+        return
+      }
     } else {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (supabase.from('restaurant_settings') as any).insert(settingsPayload)
+      const { error } = await (supabase.from('restaurant_settings') as any).insert(settingsPayload)
+      if (error) {
+        setSaveMsg(`Unable to create workflow settings: ${error.message}`)
+        setIsSaving(false)
+        return
+      }
     }
 
     setSaveMsg('Settings saved successfully!')
@@ -222,7 +238,7 @@ export default function SettingsClient({ restaurant, settings, restaurantId }: P
             }}
           >
             <span>{tab.icon}</span>
-            <span style={{ display: window?.innerWidth > 480 ? 'inline' : 'none' }}>{tab.label}</span>
+            <span>{tab.label}</span>
           </button>
         ))}
       </div>

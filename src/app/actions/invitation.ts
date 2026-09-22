@@ -1,11 +1,17 @@
 'use server'
 
-import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
 import { randomBytes } from 'crypto'
 
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 
-export async function createInvitation(restaurantId: string, role: string, email: string) {
+export async function createInvitation(
+  restaurantId: string,
+  role: string,
+  email: string,
+  branchId: string | null = null,
+  permissions: Record<string, boolean> = {},
+) {
   const supabase = await createClient()
   
   const { data: { user } } = await supabase.auth.getUser()
@@ -23,12 +29,6 @@ export async function createInvitation(restaurantId: string, role: string, email
   const expiresAt = new Date()
   expiresAt.setDate(expiresAt.getDate() + 7) // 7 days expiration
 
-  // Verify the user has access to this restaurant
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: hasAccess } = await supabase.rpc('has_restaurant_access' as any, {
-    p_restaurant_id: restaurantId
-  } as any)
-
   // We actually need to ensure they can invite others. Owner or Manager.
   // The 'has_restaurant_access' returns true for them. Waiters shouldn't invite people, but our RPC just returns a boolean.
   // We should do a strict check for admin or manager/owner here:
@@ -37,9 +37,9 @@ export async function createInvitation(restaurantId: string, role: string, email
     .select('role')
     .eq('restaurant_id', restaurantId)
     .eq('profile_id', user.id)
-    .single()
+    .limit(1)
   
-  const staffData = staffDataRaw as { role: string } | null
+  const staffData = (staffDataRaw as unknown as Array<{ role: string }> | null)?.[0] ?? null
 
   const { data: profileRaw } = await supabase
     .from('profiles')
@@ -55,11 +55,12 @@ export async function createInvitation(restaurantId: string, role: string, email
   // also check if they are the owner directly
   const { data: ownerDataRaw } = await supabase
     .from('owners')
-    .select('id')
+    .select('id, restaurants!inner(id)')
     .eq('profile_id', user.id)
-    .single()
+    .eq('restaurants.id', restaurantId)
+    .limit(1)
 
-  const ownerData = ownerDataRaw as { id: string } | null
+  const ownerData = (ownerDataRaw as unknown as Array<{ id: string }> | null)?.[0] ?? null
 
   if (!isPlatformAdmin && !isManager && !ownerData) {
     throw new Error('You do not have permission to invite staff to this restaurant.')
@@ -68,15 +69,16 @@ export async function createInvitation(restaurantId: string, role: string, email
   // Insert the invitation
   const { error } = await adminClient
     .from('invitations')
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     .insert({
       restaurant_id: restaurantId,
       role: role,
       email: email,
+      branch_id: branchId,
+      permissions,
       token: token,
       expires_at: expiresAt.toISOString(),
       invited_by: user.id
-    } as any)
+    } as unknown as never)
 
   if (error) {
     console.error('Error creating invitation:', error)

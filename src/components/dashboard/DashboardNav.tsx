@@ -6,6 +6,7 @@ import { usePathname, useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { Profile } from '@/lib/types/app.types'
 import type { User } from '@supabase/supabase-js'
+import NotificationCenter from './NotificationCenter'
 
 interface Props {
   profile: Profile
@@ -82,6 +83,7 @@ export default function DashboardNav({ profile, user, restaurants }: Props) {
       
       { label: 'Menu', href: `${base}/menu`, icon: '🍽️', section: 'Management', roles: ['owner', 'platform_admin', 'manager'] },
       { label: 'Staff', href: `${base}/staff`, icon: '👥', section: 'Management', roles: ['owner', 'platform_admin', 'manager'] },
+      { label: 'CRM & Ops', href: `${base}/crm`, icon: '🧭', section: 'Management', roles: ['owner', 'platform_admin', 'manager'] },
       { label: 'Suggestions', href: `${base}/suggestions`, icon: '💡', section: 'Management', roles: ['owner', 'platform_admin', 'manager'] },
       { label: 'Settings', href: `${base}/settings`, icon: '⚙️', section: 'Management', roles: ['owner', 'platform_admin', 'manager'] },
     ]
@@ -145,6 +147,8 @@ export default function DashboardNav({ profile, user, restaurants }: Props) {
           ))}
         </select>
       </div>
+
+      <NotificationCenter userId={user.id} />
 
       {/* Navigation */}
       <nav className="sidebar-nav">

@@ -14,6 +14,7 @@ interface Order {
   placed_at: string | null
   customer_name_snapshot: string | null
   restaurant_tables: { table_number: string; display_name: string | null } | null
+  payments?: { amount: number; method: string | null; status: string; created_at: string }[]
 }
 
 interface Props {
@@ -21,7 +22,7 @@ interface Props {
   branchId: string
 }
 
-export default function CashierClient({ restaurantId, branchId }: Props) {
+export default function CashierClient({ branchId }: Props) {
   const supabase = createClient()
   const [orders, setOrders] = useState<Order[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -29,25 +30,32 @@ export default function CashierClient({ restaurantId, branchId }: Props) {
   const [error, setError] = useState<string | null>(null)
 
   const fetchOrders = useCallback(async () => {
-    const { data } = await supabase
+    const { data, error: fetchError } = await supabase
       .from('orders')
       .select(`
         id, order_number, status, total, placed_at,
         customer_name_snapshot,
         restaurant_tables (table_number, display_name),
-        order_items(item_name_snapshot, quantity, price, special_instructions),
-        payments(amount, payment_method, status, created_at)
+        order_items(item_name_snapshot, quantity, unit_price_snapshot, special_instructions),
+        payments(amount, method, status, created_at)
       `)
       .eq('branch_id', branchId)
-      .in('status', ['ready', 'completed'])
+      .in('status', ['served', 'completed'])
       .order('placed_at', { ascending: false })
       .limit(50)
 
-    setOrders((data as unknown as Order[]) ?? [])
+    if (fetchError) {
+      setError(fetchError.message)
+      setOrders([])
+    } else {
+      setOrders((data as unknown as Order[]) ?? [])
+    }
     setIsLoading(false)
   }, [branchId, supabase])
 
   useEffect(() => {
+    // Initial data crosses the Supabase boundary asynchronously.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void fetchOrders()
   }, [fetchOrders])
 
@@ -75,10 +83,10 @@ export default function CashierClient({ restaurantId, branchId }: Props) {
     setIsProcessing(true)
     setError(null)
     try {
-      await processPayment(order.id, method, order.total, `CASHIER_${Date.now()}`)
+      await processPayment(order.id, method, order.total)
       await fetchOrders()
-    } catch (e: any) {
-      setError(e.message || 'Failed to process payment')
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Failed to process payment')
     } finally {
       setIsProcessing(false)
     }
@@ -117,6 +125,7 @@ export default function CashierClient({ restaurantId, branchId }: Props) {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px' }}>
           {orders.map(order => {
             const tableLabel = order.restaurant_tables?.display_name ?? `Table ${order.restaurant_tables?.table_number ?? '?'}`
+            const paid = order.payments?.some(payment => payment.status === 'paid') ?? order.status === 'completed'
             
             return (
               <div
@@ -142,12 +151,13 @@ export default function CashierClient({ restaurantId, branchId }: Props) {
                   </div>
                   <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#22C55E' }}>
                     {formatPrice(order.total)}
+                    {paid && <div style={{ fontSize: '0.75rem', color: '#86EFAC', marginTop: '4px' }}>Paid</div>}
                   </div>
                 </div>
 
                 <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
                   <button
-                    disabled={isProcessing}
+                    disabled={isProcessing || paid}
                     onClick={() => handleCheckout(order, 'cash')}
                     className="btn btn-secondary"
                     style={{ flex: 1, padding: '12px', fontSize: '0.9rem', fontWeight: 700 }}
@@ -155,7 +165,7 @@ export default function CashierClient({ restaurantId, branchId }: Props) {
                     💵 Cash
                   </button>
                   <button
-                    disabled={isProcessing}
+                    disabled={isProcessing || paid}
                     onClick={() => handleCheckout(order, 'card')}
                     className="btn btn-secondary"
                     style={{ flex: 1, padding: '12px', fontSize: '0.9rem', fontWeight: 700 }}
@@ -163,7 +173,7 @@ export default function CashierClient({ restaurantId, branchId }: Props) {
                     💳 Card
                   </button>
                   <button
-                    disabled={isProcessing}
+                    disabled={isProcessing || paid}
                     onClick={() => handleCheckout(order, 'upi')}
                     className="btn btn-primary"
                     style={{ flex: 1, padding: '12px', fontSize: '0.9rem', fontWeight: 700 }}

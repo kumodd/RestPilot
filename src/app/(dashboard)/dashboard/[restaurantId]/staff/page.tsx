@@ -49,11 +49,9 @@ export default async function StaffPage({ params }: { params: Promise<{ restaura
   return (
     <StaffPageClient
       staff={(staffRaw as unknown as StaffMemberRow[]) ?? []}
-      invitations={(invitationsRaw as any[]) ?? []}
+      invitations={(invitationsRaw as unknown as Array<{ id: string; role: string; email: string; token: string; created_at: string }>) ?? []}
       branches={(branchesRaw as Array<{ id: string; name: string }>) ?? []}
       restaurantId={restaurantId}
-      currentUserId={user.id}
     />
   )
 }
-

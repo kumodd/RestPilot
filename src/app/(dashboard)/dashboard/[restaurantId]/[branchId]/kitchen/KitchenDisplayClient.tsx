@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { OrderStatus } from '@/lib/types/database.types'
-import { updateOrderStatus as updateOrderStatusAction } from '@/app/actions/order'
+import { updateOrderItemStatus as updateOrderItemStatusAction, updateOrderStatus as updateOrderStatusAction } from '@/app/actions/order'
 
 interface KitchenOrderItem {
   id: string
@@ -11,7 +11,6 @@ interface KitchenOrderItem {
   quantity: number
   status: string
   special_instructions: string | null
-  menu_item_variants_snapshot: unknown
 }
 
 interface KitchenOrder {
@@ -33,7 +32,7 @@ interface Props {
 
 const KITCHEN_STATUSES: OrderStatus[] = ['confirmed', 'kitchen_accepted', 'preparing', 'ready']
 
-export default function KitchenDisplayClient({ restaurantId, branchId }: Props) {
+export default function KitchenDisplayClient({ branchId }: Props) {
   const supabase = createClient()
   const [orders, setOrders] = useState<KitchenOrder[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -67,7 +66,7 @@ export default function KitchenDisplayClient({ restaurantId, branchId }: Props) 
         id, order_number, status, confirmed_at, placed_at,
         customer_name_snapshot, notes,
         restaurant_tables (table_number, display_name),
-        order_items (id, item_name_snapshot, quantity, status, special_instructions, menu_item_variants_snapshot)
+        order_items (id, item_name_snapshot, quantity, status, special_instructions)
       `)
       .eq('branch_id', branchId)
       .in('status', KITCHEN_STATUSES)
@@ -88,7 +87,11 @@ export default function KitchenDisplayClient({ restaurantId, branchId }: Props) 
     setIsLoading(false)
   }, [branchId, supabase, playAlert])
 
-  useEffect(() => { fetchOrders() }, [fetchOrders])
+  useEffect(() => {
+    // Initial data crosses the Supabase boundary asynchronously.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchOrders()
+  }, [fetchOrders])
 
   // Realtime
   useEffect(() => {
@@ -129,8 +132,7 @@ export default function KitchenDisplayClient({ restaurantId, branchId }: Props) 
     if (updatingItemId) return
     try {
       setUpdatingItemId(itemId)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (supabase.from('order_items') as any).update({ status }).eq('id', itemId)
+      await updateOrderItemStatusAction(itemId, status)
       await fetchOrders()
     } finally {
       setUpdatingItemId(null)
@@ -146,7 +148,7 @@ export default function KitchenDisplayClient({ restaurantId, branchId }: Props) 
 
   const getElapsed = (dateStr: string | null) => {
     if (!dateStr) return 0
-    return Math.floor((Date.now() - new Date(dateStr).getTime()) / 60000)
+    return Math.floor((lastRefresh.getTime() - new Date(dateStr).getTime()) / 60000)
   }
 
   if (isLoading) {

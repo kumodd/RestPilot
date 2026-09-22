@@ -101,13 +101,19 @@ interface StaffMember {
   branches: { name: string } | null
 }
 
+interface Invitation {
+  id: string
+  role: string
+  email: string
+  token: string
+  created_at: string
+}
+
 interface Props {
   staff: StaffMember[]
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  invitations: any[]
+  invitations: Invitation[]
   branches: Array<{ id: string; name: string }>
   restaurantId: string
-  currentUserId: string
 }
 
 type ModalState =
@@ -115,10 +121,10 @@ type ModalState =
   | { type: 'invite' }
   | { type: 'permissions'; member: StaffMember }
 
-export default function StaffPageClient({ staff: initial, invitations: initialInvitations, branches, restaurantId, currentUserId }: Props) {
+export default function StaffPageClient({ staff: initial, invitations: initialInvitations, branches, restaurantId }: Props) {
   const supabase = createClient()
   const [staff, setStaff] = useState<StaffMember[]>(initial)
-  const [invitations, setInvitations] = useState<any[]>(initialInvitations)
+  const [invitations, setInvitations] = useState<Invitation[]>(initialInvitations)
   const [modal, setModal] = useState<ModalState>({ type: 'none' })
   const [filterRole, setFilterRole] = useState<string>('all')
 
@@ -126,7 +132,6 @@ export default function StaffPageClient({ staff: initial, invitations: initialIn
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviteRole, setInviteRole] = useState<UserRole>('waiter')
   const [inviteBranch, setInviteBranch] = useState(branches[0]?.id ?? '')
-  const [inviteCode, setInviteCode] = useState('')
   const [invitePerms, setInvitePerms] = useState<Record<string, boolean>>({})
   const [isInviting, setIsInviting] = useState(false)
   const [inviteMsg, setInviteMsg] = useState<{ type: 'success' | 'error' | 'invite'; text: string } | null>(null)
@@ -187,7 +192,7 @@ export default function StaffPageClient({ staff: initial, invitations: initialIn
       // Wait, we can import server actions in client components in Next.js 13+!
       const { createInvitation } = await import('@/app/actions/invitation')
       
-      const token = await createInvitation(restaurantId, inviteRole, inviteEmail)
+      const token = await createInvitation(restaurantId, inviteRole, inviteEmail, inviteBranch || null, invitePerms)
       const inviteUrl = `${window.location.origin}/auth/accept-invite?token=${token}`
       
       setInviteMsg({ 
@@ -199,8 +204,8 @@ export default function StaffPageClient({ staff: initial, invitations: initialIn
 
       await refresh()
       setTimeout(() => setModal({ type: 'none' }), 8000)
-    } catch (err: any) {
-      setInviteMsg({ type: 'error', text: err.message || 'Failed to create invitation' })
+    } catch (err: unknown) {
+      setInviteMsg({ type: 'error', text: err instanceof Error ? err.message : 'Failed to create invitation' })
     } finally {
       setIsInviting(false)
     }
@@ -460,9 +465,17 @@ export default function StaffPageClient({ staff: initial, invitations: initialIn
                     ))}
                   </select>
                 </div>
+
+                <div className="form-group">
+                  <label className="form-label">Branch assignment</label>
+                  <select className="form-select" value={inviteBranch} onChange={e => setInviteBranch(e.target.value)}>
+                    <option value="">All branches</option>
+                    {branches.map(branch => <option key={branch.id} value={branch.id}>{branch.name}</option>)}
+                  </select>
+                </div>
                 
                 <p style={{ fontSize: '0.8rem', color: '#737373', marginTop: '4px' }}>
-                  Branch assignment and specific permissions can be configured after the staff member accepts the invitation.
+                  The invitation includes the selected branch and default permissions for the chosen role.
                 </p>
 
                 <div style={{ display: 'flex', gap: '10px', paddingTop: '8px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>

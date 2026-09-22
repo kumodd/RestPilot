@@ -2,6 +2,7 @@
 // RestPilot — Kitchen Display Cubit
 // ============================================================
 
+import 'dart:typed_data';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -90,9 +91,33 @@ class KitchenCubit extends Cubit<KitchenState> {
 
   Future<void> _playSound() async {
     try {
-      // In a real app, ensure this asset exists
-      // await _audioPlayer.play(AssetSource('sounds/new_order.mp3'));
+      // Use a generated tone so the alert works without a bundled asset.
+      await _audioPlayer.play(BytesSource(Uint8List.fromList(_beepWav)));
     } catch (_) {}
+  }
+
+  // A tiny mono PCM/WAV beep kept in code so kitchen alerts work on a fresh
+  // install. It is intentionally short and has no external asset dependency.
+  static final List<int> _beepWav = _buildBeepWav();
+
+  static List<int> _buildBeepWav() {
+    const sampleRate = 8000;
+    const samples = 1200;
+    final bytes = <int>[];
+    void write16(int value) { bytes.add(value & 0xff); bytes.add((value >> 8) & 0xff); }
+    void write32(int value) {
+      bytes.add(value & 0xff); bytes.add((value >> 8) & 0xff);
+      bytes.add((value >> 16) & 0xff); bytes.add((value >> 24) & 0xff);
+    }
+    bytes.addAll('RIFF'.codeUnits); write32(36 + samples * 2);
+    bytes.addAll('WAVEfmt '.codeUnits); write32(16); write16(1); write16(1);
+    write32(sampleRate); write32(sampleRate * 2); write16(2); write16(16);
+    bytes.addAll('data'.codeUnits); write32(samples * 2);
+    for (var i = 0; i < samples; i++) {
+      final value = (12000 * (i % 80 < 40 ? 1 : -1)).round();
+      write16(value);
+    }
+    return bytes;
   }
 
   Future<void> advanceStatus({

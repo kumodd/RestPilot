@@ -18,7 +18,7 @@ class CashierCubit extends Cubit<CashierState> {
   final FetchCashierOrders _fetchCashierOrders;
   final ProcessPayment _processPayment;
   final RealtimeManager _realtime;
-  
+
   String? _currentBranchId;
 
   CashierCubit({
@@ -45,7 +45,6 @@ class CashierCubit extends Cubit<CashierState> {
   }
 
   void _subscribeToRealtime(String branchId) {
-    // B2 FIX: Subscribe to 'orders' table since 'payments' is missing from publication
     final channelName = AppConstants.cashierChannel(branchId);
     _realtime.subscribe(
       channelName: channelName,
@@ -54,7 +53,18 @@ class CashierCubit extends Cubit<CashierState> {
       filterValue: branchId,
       onEvent: (payload) {
         if (!isClosed && _currentBranchId == branchId) {
-           _refreshSilent(branchId);
+          _refreshSilent(branchId);
+        }
+      },
+    );
+    _realtime.subscribe(
+      channelName: '$channelName-payments',
+      table: 'payments',
+      filterColumn: 'branch_id',
+      filterValue: branchId,
+      onEvent: (payload) {
+        if (!isClosed && _currentBranchId == branchId) {
+          _refreshSilent(branchId);
         }
       },
     );
@@ -64,7 +74,8 @@ class CashierCubit extends Cubit<CashierState> {
     try {
       final orders = await _fetchCashierOrders(branchId);
       if (!isClosed && state is CashierLoaded) {
-        emit((state as CashierLoaded).copyWith(orders: orders, isProcessing: false));
+        emit((state as CashierLoaded)
+            .copyWith(orders: orders, isProcessing: false));
       }
     } catch (_) {}
   }
@@ -87,7 +98,7 @@ class CashierCubit extends Cubit<CashierState> {
         amount: amount,
         externalReference: reference,
       );
-      // Realtime (orders) will catch the completion, but we also manually refresh 
+      // Realtime (orders) will catch the completion, but we also manually refresh
       // just in case since payments table isn't broadcasted (B2)
       if (_currentBranchId != null) {
         await _refreshSilent(_currentBranchId!);
@@ -96,7 +107,8 @@ class CashierCubit extends Cubit<CashierState> {
       emit(CashierActionError(orders: currentState.orders, error: e.message));
       emit(currentState.copyWith(isProcessing: false, processingOrderId: null));
     } catch (e) {
-      emit(CashierActionError(orders: currentState.orders, error: e.toString()));
+      emit(
+          CashierActionError(orders: currentState.orders, error: e.toString()));
       emit(currentState.copyWith(isProcessing: false, processingOrderId: null));
     }
   }
@@ -105,6 +117,8 @@ class CashierCubit extends Cubit<CashierState> {
   Future<void> close() {
     if (_currentBranchId != null) {
       _realtime.unsubscribe(AppConstants.cashierChannel(_currentBranchId!));
+      _realtime.unsubscribe(
+          '${AppConstants.cashierChannel(_currentBranchId!)}-payments');
     }
     return super.close();
   }

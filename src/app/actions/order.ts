@@ -62,13 +62,14 @@ export async function updateOrderStatus(orderId: string, newStatus: OrderStatus)
     .single()
     
   if (!profile) throw new Error('Profile not found')
+  const profileRole = (profile as unknown as { role: string }).role
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase.rpc as any)('transition_order_status', {
     p_order_id: orderId,
     p_new_status: newStatus,
     p_actor_id: user.id,
-    p_actor_type: (profile as any).role,
+    p_actor_type: profileRole,
   })
 
   if (error) {
@@ -76,5 +77,21 @@ export async function updateOrderStatus(orderId: string, newStatus: OrderStatus)
     throw new Error('Failed to update order status')
   }
 
+  return data
+}
+
+export async function updateOrderItemStatus(itemId: string, newStatus: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+
+  // The RPC derives the staff role, restaurant and branch from auth.uid().
+  // Do not update order_items directly from the browser.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase.rpc as any)('update_order_item_status', {
+    p_item_id: itemId,
+    p_new_status: newStatus,
+  })
+  if (error || data?.error) throw new Error(error?.message ?? data?.error ?? 'Failed to update order item')
   return data
 }

@@ -20,46 +20,65 @@ class ContextRepositoryImpl implements ContextRepository {
   Future<AppContext> loadContext({required UserProfile profile}) async {
     try {
       final staffContexts = await _remote.fetchStaffContexts(profile.id);
-      List<Restaurant> restaurants = [];
-      
-      // If owner or platform admin, fetch all owned restaurants
-      if (profile.isOwner || profile.isPlatformAdmin) {
-        restaurants = await _remote.fetchOwnedRestaurants(profile.id);
-      } else {
-        // Just mock fetching the single restaurant from staff context for simplicity
-        // Real app would fetch the specific restaurant details.
-        // Assuming we always have at least one valid context if staff:
-        if (staffContexts.isEmpty) {
-          throw const PermissionFailure('No active restaurant assignments found.');
-        }
+      final restaurants = (profile.isOwner || profile.isPlatformAdmin)
+          ? await _remote.fetchOwnedRestaurants(profile.id)
+          : await _remote.fetchStaffRestaurants(
+              staffContexts.map((context) => context.restaurantId).toSet().toList(),
+            );
+
+      if (restaurants.isEmpty) {
+        throw const PermissionFailure('You don\'t have access to any active restaurants.');
       }
 
-      // We need at least one restaurant
-      if (restaurants.isEmpty && staffContexts.isEmpty) {
-         throw const PermissionFailure('You don\'t have access to any restaurants.');
+      // Load every branch the user can see. Branch-scoped staff assignments
+      // are filtered after loading so a multi-restaurant account is handled
+      // without falling back to a fake branch.
+      final allBranches = <Branch>[];
+      for (final restaurant in restaurants) {
+        final branches = await _remote.fetchBranches(restaurant.id);
+        allBranches.addAll(branches);
       }
 
-      // For now, let's just pick the first available context or restaurant if nothing is saved
       final savedPrefs = await getSavedSelection();
       String? savedRestId = savedPrefs['restaurantId'];
       String? savedBranchId = savedPrefs['branchId'];
-      
-      Restaurant? selectedRestaurant;
-      Branch? selectedBranch;
-      String? effectiveRole;
-      Map<String, bool> effectivePermissions = {};
-      
-      // Logic to determine the active restaurant and branch based on saved selection vs available list
-      // ... (Simplified for this stub to always select the first valid one if not matching)
-      
-      // Placeholder return
+
+      final selectedRestaurant = restaurants.firstWhere(
+        (restaurant) => restaurant.id == savedRestId,
+        orElse: () => restaurants.first,
+      );
+      final selectedStaffContext = staffContexts.cast<StaffContext?>().firstWhere(
+        (context) => context?.restaurantId == selectedRestaurant.id,
+        orElse: () => null,
+      );
+      final assignedBranchId = selectedStaffContext?.branchId;
+      final availableBranches = allBranches.where((branch) {
+        if (branch.restaurantId != selectedRestaurant.id) return false;
+        return assignedBranchId == null || branch.id == assignedBranchId;
+      }).toList();
+
+      if (availableBranches.isEmpty) {
+        throw const PermissionFailure('No active branches found for the selected restaurant.');
+      }
+
+      final selectedBranch = availableBranches.firstWhere(
+        (branch) => branch.id == savedBranchId,
+        orElse: () => availableBranches.firstWhere(
+          (branch) => branch.id == assignedBranchId,
+          orElse: () => availableBranches.firstWhere(
+            (branch) => branch.isMainBranch,
+            orElse: () => availableBranches.first,
+          ),
+        ),
+      );
+
       return AppContext(
         restaurants: restaurants,
-        selectedRestaurant: restaurants.first,
-        branches: [],
-        selectedBranch: const Branch(id: 'stub', restaurantId: 'stub', name: 'Stub', isMainBranch: true, isActive: true),
-        role: profile.role,
-        permissions: {},
+        selectedRestaurant: selectedRestaurant,
+        branches: allBranches,
+        selectedBranch: selectedBranch,
+        role: selectedStaffContext?.role ?? profile.role,
+        permissions: selectedStaffContext?.permissions ?? {},
       );
 
     } catch (e) {

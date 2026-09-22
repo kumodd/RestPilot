@@ -2,9 +2,11 @@
 
 import { useOrderTracking } from '@/lib/hooks/useOrderTracking'
 import { formatPrice } from '@/lib/utils/price'
+import { createClient } from '@/lib/supabase/client'
 import { ORDER_STATUS_CONFIG } from '@/lib/types/app.types'
 import type { OrderStatus } from '@/lib/types/database.types'
 import { format } from 'date-fns'
+import { useState } from 'react'
 
 const TIMELINE_STEPS: Array<{
   status: OrderStatus[]
@@ -42,6 +44,41 @@ interface Props {
 
 export default function OrderTrackingClient({ orderToken }: Props) {
   const { order, isLoading, error } = useOrderTracking(orderToken)
+  const supabase = createClient()
+  const [billRequested, setBillRequested] = useState(false)
+  const [billError, setBillError] = useState<string | null>(null)
+  const [feedbackRating, setFeedbackRating] = useState(0)
+  const [feedbackComment, setFeedbackComment] = useState('')
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState(false)
+  const [feedbackError, setFeedbackError] = useState<string | null>(null)
+
+  const requestBill = async () => {
+    setBillError(null)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error: rpcError } = await (supabase.rpc as any)('request_bill_from_order_token', { p_order_token: orderToken })
+    if (rpcError || data?.error) {
+      setBillError(rpcError?.message ?? data?.error ?? 'Unable to request the bill')
+      return
+    }
+    setBillRequested(true)
+  }
+
+  const submitFeedback = async () => {
+    if (!feedbackRating) return
+    setFeedbackError(null)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error: rpcError } = await (supabase.rpc as any)('submit_customer_feedback', {
+      p_order_token: orderToken,
+      p_rating: feedbackRating,
+      p_comment: feedbackComment.trim() || null,
+      p_category: null,
+    })
+    if (rpcError || data?.error) {
+      setFeedbackError(rpcError?.message ?? data?.error ?? 'Unable to submit feedback')
+      return
+    }
+    setFeedbackSubmitted(true)
+  }
 
   if (isLoading) {
     return (
@@ -164,6 +201,15 @@ export default function OrderTrackingClient({ orderToken }: Props) {
           <div style={{ fontSize: '0.95rem', color: '#A3A3A3', marginBottom: '20px' }}>
             Table {order.table_number}
           </div>
+
+          {!isTerminal && (
+            <div>
+              <button type="button" onClick={() => void requestBill()} disabled={billRequested} style={{ padding: '9px 16px', borderRadius: '999px', border: '1px solid rgba(255,255,255,0.16)', background: billRequested ? 'rgba(34,197,94,0.12)' : 'rgba(255,255,255,0.08)', color: billRequested ? '#86EFAC' : '#F5F5F5', cursor: billRequested ? 'default' : 'pointer', fontWeight: 700 }}>
+                {billRequested ? '✓ Bill requested' : 'Request bill'}
+              </button>
+              {billError && <p style={{ color: '#FCA5A5', fontSize: '0.75rem', marginTop: '7px' }}>{billError}</p>}
+            </div>
+          )}
 
           {/* Status */}
           <div
@@ -350,6 +396,20 @@ export default function OrderTrackingClient({ orderToken }: Props) {
           </div>
         </div>
       </div>
+
+      {isTerminal && !isCancelled && (
+        <div style={{ padding: '0 20px 20px' }}>
+          <div style={{ padding: '16px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '16px' }}>
+            <h2 style={{ fontSize: '0.82rem', fontWeight: 700, color: '#A3A3A3', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '12px' }}>How was your visit?</h2>
+            {feedbackSubmitted ? <p style={{ color: '#86EFAC', fontSize: '0.85rem' }}>Thanks for helping the restaurant improve.</p> : <>
+              <div style={{ display: 'flex', gap: '6px', marginBottom: '10px' }}>{[1, 2, 3, 4, 5].map(value => <button type="button" key={value} onClick={() => setFeedbackRating(value)} aria-label={`${value} stars`} style={{ border: 'none', background: 'transparent', color: value <= feedbackRating ? '#F59E0B' : '#525252', fontSize: '1.5rem', cursor: 'pointer' }}>★</button>)}</div>
+              <textarea value={feedbackComment} onChange={event => setFeedbackComment(event.target.value)} placeholder="Tell us what went well or what we can improve" rows={2} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)', color: '#F5F5F5', resize: 'vertical' }} />
+              <button type="button" onClick={() => void submitFeedback()} disabled={!feedbackRating} style={{ marginTop: '10px', padding: '9px 14px', borderRadius: '8px', border: 'none', background: feedbackRating ? '#FF6B35' : 'rgba(255,255,255,0.08)', color: 'white', fontWeight: 700, cursor: feedbackRating ? 'pointer' : 'default' }}>Submit feedback</button>
+              {feedbackError && <p style={{ color: '#FCA5A5', fontSize: '0.75rem', marginTop: '7px' }}>{feedbackError}</p>}
+            </>}
+          </div>
+        </div>
+      )}
 
       {/* Event Log */}
       {order.events.length > 0 && (

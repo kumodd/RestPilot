@@ -13,11 +13,11 @@ interface RestaurantRow {
   slug: string
   description: string | null
   logo_url: string | null
-  currency_code: string
+  currency: string
   currency_symbol: string
   phone: string | null
   email: string | null
-  website: string | null
+  website_url: string | null
 }
 
 interface SettingsRow {
@@ -48,7 +48,7 @@ export default async function SettingsPage({ params }: { params: Promise<{ resta
   if (!user) redirect('/auth/login')
 
   const [{ data: restaurantRaw }, { data: settingsRaw }] = await Promise.all([
-    supabase.from('restaurants').select('id, name, slug, description, logo_url, currency_code, currency_symbol, phone, email, website').eq('id', restaurantId).single(),
+    supabase.from('restaurants').select('id, name, slug, description, logo_url, currency, currency_symbol, phone, email, website_url').eq('id', restaurantId).single(),
     supabase.from('restaurant_settings').select('*').eq('restaurant_id', restaurantId).single(),
   ])
 
@@ -63,4 +63,3 @@ export default async function SettingsPage({ params }: { params: Promise<{ resta
     />
   )
 }
-

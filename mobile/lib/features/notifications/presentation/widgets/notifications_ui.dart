@@ -4,6 +4,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/utils/date_utils.dart';
 import '../cubit/notifications_cubit.dart';
 import '../../domain/entities/app_notification.dart';
@@ -134,7 +135,11 @@ class _NotificationTile extends StatelessWidget {
           context.read<NotificationsCubit>().markAsRead(notification.id);
         }
         if (notification.actionUrl != null && notification.actionUrl!.isNotEmpty) {
-           // Basic routing or deep link handling could go here.
+          Navigator.of(context).pop();
+          // Notification URLs are shared with the web app. The mobile shell
+          // currently has one operational dashboard route, so keep navigation
+          // inside the mobile router until feature-specific routes exist.
+          context.go(notification.actionUrl!.startsWith('/dashboard') ? '/dashboard' : '/select-restaurant');
         }
       },
     );

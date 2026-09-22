@@ -60,9 +60,9 @@ BEGIN
   END IF;
 
   IF NOT is_platform_admin() THEN
-    NEW.role = OLD.role;
-    NEW.is_active = OLD.is_active;
-    NEW.id = OLD.id;
+    NEW.role := OLD.role;
+    NEW.is_active := OLD.is_active;
+    NEW.id := OLD.id;
   END IF;
   RETURN NEW;
 END;
@@ -76,10 +76,10 @@ BEGIN
   END IF;
 
   IF NOT (is_platform_admin() OR owns_restaurant(OLD.restaurant_id)) THEN
-    NEW.role = OLD.role;
-    NEW.restaurant_id = OLD.restaurant_id;
-    NEW.is_active = OLD.is_active;
-    NEW.profile_id = OLD.profile_id;
+    NEW.role := OLD.role;
+    NEW.restaurant_id := OLD.restaurant_id;
+    NEW.is_active := OLD.is_active;
+    NEW.profile_id := OLD.profile_id;
   END IF;
   RETURN NEW;
 END;

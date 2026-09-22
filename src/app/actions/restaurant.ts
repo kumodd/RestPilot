@@ -56,15 +56,15 @@ export async function createRestaurantAction(formData: FormData) {
   // 1. Create Restaurant
   const { data: restaurantRaw, error: restError } = await supabase
     .from('restaurants')
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     .insert({
       owner_id: owner.id,
       name,
       slug,
       city,
+      currency: currency === '₹' ? 'INR' : currency === '$' ? 'USD' : currency === '€' ? 'EUR' : 'GBP',
       currency_symbol: currency,
       is_active: true
-    } as any)
+    } as unknown as never)
     .select('id')
     .single()
 
@@ -78,14 +78,13 @@ export async function createRestaurantAction(formData: FormData) {
   // 2. Create Default Branch
   const { data: branchRaw, error: branchError } = await supabase
     .from('branches')
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     .insert({
       restaurant_id: restaurant.id,
       name: 'Main Branch',
       city: city,
       is_main_branch: true,
       is_active: true
-    } as any)
+    } as unknown as never)
     .select('id')
     .single()
 
@@ -98,26 +97,29 @@ export async function createRestaurantAction(formData: FormData) {
 
   // 3. Create Default Branch Settings
   await supabase
+    .from('restaurant_settings')
+    .insert({ restaurant_id: restaurant.id } as unknown as never)
+
+  await supabase
     .from('branch_settings')
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     .insert({
       branch_id: branch.id,
-      verification_required: true,
-      allow_cash_payment: true,
-      allow_online_payment: true
-    } as any)
+      waiter_verification_required: true,
+      customer_can_add_items: true,
+      waiter_recommendations_enabled: true,
+      auto_accept_kitchen_orders: false,
+    } as unknown as never)
 
   // 4. Assign Owner as Platform Admin / Manager for this specific restaurant if needed
   // Note: Owners automatically have access via the `owners` table in RLS, but adding them to staff_members makes queries uniform.
   await supabase
     .from('staff_members')
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     .insert({
       profile_id: user.id,
       restaurant_id: restaurant.id,
       role: 'manager', // Owners act as managers at the restaurant level
       is_active: true
-    } as any)
+    } as unknown as never)
 
   revalidatePath('/dashboard')
   return { success: true, restaurantId: restaurant.id }

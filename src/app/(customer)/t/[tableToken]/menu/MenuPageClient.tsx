@@ -64,6 +64,7 @@ export default function MenuPageClient({ resolution, categories, settings, table
   const [customizerItem, setCustomizerItem] = useState<MenuItem | null>(null)
   const [cartOpen, setCartOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [searchOpen, setSearchOpen] = useState(false)
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({})
 
   const brandStyle = {
@@ -159,7 +160,7 @@ export default function MenuPageClient({ resolution, categories, settings, table
           </div>
           {/* Search */}
           <button
-            onClick={() => {}}
+            onClick={() => setSearchOpen(value => !value)}
             style={{
               padding: '7px 12px',
               background: 'rgba(255,255,255,0.08)',
@@ -176,6 +177,20 @@ export default function MenuPageClient({ resolution, categories, settings, table
             🔍
           </button>
         </div>
+
+        {searchOpen && (
+          <div style={{ padding: '0 16px 10px' }}>
+            <input
+              autoFocus
+              type="search"
+              value={searchQuery}
+              onChange={event => setSearchQuery(event.target.value)}
+              placeholder="Search dishes, ingredients or categories…"
+              aria-label="Search menu"
+              style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.16)', background: 'rgba(255,255,255,0.08)', color: 'white', outline: 'none' }}
+            />
+          </div>
+        )}
 
         {/* Category Nav */}
         <div

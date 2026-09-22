@@ -56,26 +56,39 @@ class OrderRemoteDataSourceImpl implements OrderRemoteDataSource {
   @override
   Future<List<Order>> fetchLiveOrders(String branchId) async {
     final data = await withRetry(() => supabase
-        .from('orders')
-        .select(_kOrderSelect)
-        .eq('branch_id', branchId)
-        .inFilter('status', [
-          'placed', 'awaiting_waiter_verification', 'waiter_reviewing',
-          'confirmed', 'kitchen_accepted', 'preparing', 'ready', 'served',
-        ])
-        .order('created_at', ascending: true));
-    return (data as List).map((e) => _orderFromMap(e as Map<String, dynamic>)).toList();
+            .from('orders')
+            .select(_kOrderSelect)
+            .eq('branch_id', branchId)
+            .inFilter('status', [
+          'placed',
+          'awaiting_waiter_verification',
+          'waiter_reviewing',
+          'confirmed',
+          'kitchen_accepted',
+          'preparing',
+          'ready',
+          'served',
+        ]).order('created_at', ascending: true));
+    return (data as List)
+        .map((e) => _orderFromMap(e as Map<String, dynamic>))
+        .toList();
   }
 
   @override
   Future<List<Order>> fetchKitchenOrders(String branchId) async {
     final data = await withRetry(() => supabase
-        .from('orders')
-        .select(_kOrderItemSelect)
-        .eq('branch_id', branchId)
-        .inFilter('status', ['confirmed', 'kitchen_accepted', 'preparing', 'ready'])
-        .order('confirmed_at', ascending: true, nullsFirst: false));
-    return (data as List).map((e) => _orderFromMap(e as Map<String, dynamic>)).toList();
+            .from('orders')
+            .select(_kOrderItemSelect)
+            .eq('branch_id', branchId)
+            .inFilter('status', [
+          'confirmed',
+          'kitchen_accepted',
+          'preparing',
+          'ready'
+        ]).order('confirmed_at', ascending: true, nullsFirst: false));
+    return (data as List)
+        .map((e) => _orderFromMap(e as Map<String, dynamic>))
+        .toList();
   }
 
   @override
@@ -84,10 +97,12 @@ class OrderRemoteDataSourceImpl implements OrderRemoteDataSource {
         .from('orders')
         .select(_kOrderSelect)
         .eq('branch_id', branchId)
-        .inFilter('status', ['ready', 'served', 'completed'])
+        .inFilter('status', ['served', 'completed'])
         .order('placed_at', ascending: false)
         .limit(50));
-    return (data as List).map((e) => _orderFromMap(e as Map<String, dynamic>)).toList();
+    return (data as List)
+        .map((e) => _orderFromMap(e as Map<String, dynamic>))
+        .toList();
   }
 
   @override
@@ -97,14 +112,16 @@ class OrderRemoteDataSourceImpl implements OrderRemoteDataSource {
     required String actorId,
     required String actorType,
   }) async {
-    final result = await withRetry(() => supabase.rpc('transition_order_status', params: {
-          'p_order_id': orderId,
-          'p_new_status': newStatus,
-          'p_actor_id': actorId,
-          'p_actor_type': actorType,
-        }));
+    final result =
+        await withRetry(() => supabase.rpc('transition_order_status', params: {
+              'p_order_id': orderId,
+              'p_new_status': newStatus,
+              'p_actor_id': actorId,
+              'p_actor_type': actorType,
+            }));
     if (result is Map && result['error'] != null) {
-      throw ServerFailure(result['error'] as String, code: 'transition_order_status');
+      throw ServerFailure(result['error'] as String,
+          code: 'transition_order_status');
     }
   }
 
@@ -115,24 +132,32 @@ class OrderRemoteDataSourceImpl implements OrderRemoteDataSource {
     required double amount,
     String? externalReference,
   }) async {
-    final result = await withRetry(() => supabase.rpc('process_secure_payment', params: {
-          'p_order_id': orderId,
-          'p_method': method,
-          'p_amount': amount,
-          if (externalReference != null) 'p_external_reference': externalReference,
-        }));
+    final result =
+        await withRetry(() => supabase.rpc('process_secure_payment', params: {
+              'p_order_id': orderId,
+              'p_method': method,
+              'p_amount': amount,
+              if (externalReference != null)
+                'p_external_reference': externalReference,
+            }));
     if (result is Map && result['error'] != null) {
-      throw ServerFailure(result['error'] as String, code: 'process_secure_payment');
+      throw ServerFailure(result['error'] as String,
+          code: 'process_secure_payment');
     }
     return (result as Map<String, dynamic>?) ?? {};
   }
 
   @override
   Future<void> updateOrderItemStatus(String itemId, String newStatus) async {
-    await withRetry(() => supabase
-        .from('order_items')
-        .update({'status': newStatus})
-        .eq('id', itemId));
+    final result =
+        await withRetry(() => supabase.rpc('update_order_item_status', params: {
+              'p_item_id': itemId,
+              'p_new_status': newStatus,
+            }));
+    if (result is Map && result['error'] != null) {
+      throw ServerFailure(result['error'] as String,
+          code: 'update_order_item_status');
+    }
   }
 
   // ── Mapper ─────────────────────────────────────────────────
@@ -153,7 +178,8 @@ class OrderRemoteDataSourceImpl implements OrderRemoteDataSource {
         id: item['id'] as String,
         orderId: item['order_id'] as String? ?? m['id'] as String,
         itemNameSnapshot: item['item_name_snapshot'] as String? ?? '',
-        unitPriceSnapshot: (item['unit_price_snapshot'] as num?)?.toDouble() ?? 0,
+        unitPriceSnapshot:
+            (item['unit_price_snapshot'] as num?)?.toDouble() ?? 0,
         quantity: item['quantity'] as int? ?? 1,
         lineTotal: (item['line_total'] as num?)?.toDouble() ?? 0,
         status: item['status'] as String? ?? 'pending',

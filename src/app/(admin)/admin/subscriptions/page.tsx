@@ -1,19 +1,15 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
-import { formatPriceCompact } from '@/lib/utils/price'
 import { redirect } from 'next/navigation'
 
 export const metadata: Metadata = { title: 'Subscriptions — RestPilot Admin' }
 
 interface SubRow {
   id: string
-  restaurant_id: string
-  plan: string
-  status: string
-  trial_ends_at: string | null
-  current_period_start: string | null
-  current_period_end: string | null
-  restaurants: { name: string; slug: string } | null
+  subscription_plan: string
+  subscription_status: string
+  subscription_expires_at: string | null
+  restaurants: Array<{ name: string; slug: string }> | null
 }
 
 const PLAN_COLORS: Record<string, string> = {
@@ -35,18 +31,18 @@ export default async function AdminSubscriptionsPage() {
   if (profile?.role !== 'platform_admin') redirect('/dashboard')
 
   const { data: subsRaw } = await supabase
-    .from('subscriptions')
+    .from('owners')
     .select(`
-      id, restaurant_id, plan, status, trial_ends_at,
-      current_period_start, current_period_end,
+      id, subscription_plan, subscription_status, subscription_expires_at,
       restaurants (name, slug)
     `)
-    .order('current_period_end', { ascending: true })
+    .order('subscription_expires_at', { ascending: true, nullsFirst: false })
 
   const subs = (subsRaw as unknown as SubRow[]) ?? []
+  const currentTime = new Date().getTime()
 
   const planCounts = subs.reduce((acc: Record<string, number>, s) => {
-    acc[s.plan] = (acc[s.plan] ?? 0) + 1
+    acc[s.subscription_plan] = (acc[s.subscription_plan] ?? 0) + 1
     return acc
   }, {})
 
@@ -99,8 +95,8 @@ export default async function AdminSubscriptionsPage() {
           <div style={{ padding: '40px', textAlign: 'center', color: '#525252' }}>No subscriptions.</div>
         ) : (
           subs.map((sub, idx) => {
-            const endDate = sub.current_period_end ? new Date(sub.current_period_end) : null
-            const isExpiringSoon = endDate && endDate.getTime() - Date.now() < 7 * 24 * 60 * 60 * 1000
+            const endDate = sub.subscription_expires_at ? new Date(sub.subscription_expires_at) : null
+            const isExpiringSoon = endDate && endDate.getTime() - currentTime < 7 * 24 * 60 * 60 * 1000
 
             return (
               <div
@@ -117,10 +113,10 @@ export default async function AdminSubscriptionsPage() {
               >
                 <div>
                   <div style={{ fontWeight: 600, fontSize: '0.9rem', color: '#F5F5F5' }}>
-                    {sub.restaurants?.name ?? '—'}
+                    {sub.restaurants?.[0]?.name ?? '—'}
                   </div>
                   <div style={{ fontSize: '0.72rem', color: '#525252' }}>
-                    /{sub.restaurants?.slug}
+                    /{sub.restaurants?.[0]?.slug}
                   </div>
                 </div>
 
@@ -133,18 +129,18 @@ export default async function AdminSubscriptionsPage() {
                     fontWeight: 700,
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em',
-                    background: `${PLAN_COLORS[sub.plan] ?? '#737373'}15`,
-                    color: PLAN_COLORS[sub.plan] ?? '#737373',
-                    border: `1px solid ${PLAN_COLORS[sub.plan] ?? '#737373'}30`,
+                    background: `${PLAN_COLORS[sub.subscription_plan] ?? '#737373'}15`,
+                    color: PLAN_COLORS[sub.subscription_plan] ?? '#737373',
+                    border: `1px solid ${PLAN_COLORS[sub.subscription_plan] ?? '#737373'}30`,
                   }}
                 >
-                  {sub.plan}
+                  {sub.subscription_plan}
                 </span>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: STATUS_COLORS[sub.status] ?? '#737373' }} />
-                  <span style={{ fontSize: '0.78rem', color: STATUS_COLORS[sub.status] ?? '#737373', textTransform: 'capitalize' }}>
-                    {sub.status}
+                  <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: STATUS_COLORS[sub.subscription_status] ?? '#737373' }} />
+                  <span style={{ fontSize: '0.78rem', color: STATUS_COLORS[sub.subscription_status] ?? '#737373', textTransform: 'capitalize' }}>
+                    {sub.subscription_status}
                   </span>
                 </div>
 
