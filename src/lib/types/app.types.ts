@@ -114,6 +114,8 @@ export interface OrderTracking {
   status: OrderStatus
   table_number: string
   items: Array<{
+    id: string
+    menu_item_id: string | null
     name: string
     quantity: number
     status: ItemStatus

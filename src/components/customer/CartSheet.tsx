@@ -21,6 +21,7 @@ interface Props {
   settings: RestaurantSettings | null
   customerData: CustomerBrowserData | null
   tableToken: string
+  existingOrderToken?: string | null
   onClose: () => void
 }
 
@@ -31,6 +32,7 @@ export default function CartSheet({
   settings,
   customerData: initialCustomerData,
   tableToken,
+  existingOrderToken = null,
   onClose,
 }: Props) {
   const router = useRouter()
@@ -56,7 +58,7 @@ export default function CartSheet({
   const displayTotal = cart.subtotal + displayTax + displaySC
 
   const handlePlaceOrder = async () => {
-    if (settings?.customer_phone_required && !phone.trim()) {
+    if (!existingOrderToken && settings?.customer_phone_required && !phone.trim()) {
       setError('Phone number is required')
       return
     }
@@ -82,16 +84,21 @@ export default function CartSheet({
     }))
 
     try {
+      const rpcName = existingOrderToken ? 'add_items_to_order' : 'place_order_from_qr'
+      const rpcArgs = existingOrderToken
+        ? { p_order_token: existingOrderToken, p_items: itemsPayload }
+        : {
+            p_qr_token: tableToken,
+            p_table_session_id: null,
+            p_customer_name: name.trim() || null,
+            p_customer_phone: phone.trim() || null,
+            p_customer_notes: notes.trim() || null,
+            p_client_request_id: clientRequestId,
+            p_items: itemsPayload,
+          }
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error: rpcError } = await (supabase.rpc as any)('place_order_from_qr', {
-        p_qr_token: tableToken,
-        p_table_session_id: null,
-        p_customer_name: name.trim() || null,
-        p_customer_phone: phone.trim() || null,
-        p_customer_notes: notes.trim() || null,
-        p_client_request_id: clientRequestId,
-        p_items: itemsPayload,
-      })
+      const { data, error: rpcError } = await (supabase.rpc as any)(rpcName, rpcArgs)
 
       const orderResult = data as { error?: string; order_token?: string } | null
       if (rpcError || !orderResult || orderResult.error) {
@@ -104,7 +111,7 @@ export default function CartSheet({
       try {
         localStorage.setItem('restpilot_last_table_token', tableToken)
       } catch {}
-      router.push(`/order/${orderResult.order_token}`)
+      router.push(`/order/${existingOrderToken ?? orderResult?.order_token}`)
     } catch {
       setError('Something went wrong. Please check your connection and try again.')
       setIsPlacing(false)
@@ -148,9 +155,9 @@ export default function CartSheet({
           {/* Header */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
             <div>
-              <h2 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#F5F5F5' }}>Your Order</h2>
+              <h2 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#F5F5F5' }}>{existingOrderToken ? 'Add to live order' : 'Your Order'}</h2>
               <p style={{ fontSize: '0.8rem', color: '#737373' }}>
-                {table.display_name ?? `Table ${table.table_number}`} · {restaurant.name}
+                {existingOrderToken ? 'These items will be sent to the kitchen' : `${table.display_name ?? `Table ${table.table_number}`} · ${restaurant.name}`}
               </p>
             </div>
             <button
@@ -430,13 +437,13 @@ export default function CartSheet({
               </>
             ) : (
               <>
-                🚀 Place Order · {formatPrice(displayTotal, restaurant.currency_symbol)}
+                {existingOrderToken ? '➕ Add to Order' : '🚀 Place Order'} · {formatPrice(displayTotal, restaurant.currency_symbol)}
               </>
             )}
           </button>
 
           <p style={{ textAlign: 'center', fontSize: '0.72rem', color: '#525252', marginTop: '12px' }}>
-            A waiter will visit your table to confirm the order
+            {existingOrderToken ? 'Your staff will be notified about the update.' : 'A waiter will visit your table to confirm the order'}
           </p>
         </div>
       </div>

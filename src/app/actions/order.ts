@@ -25,6 +25,8 @@ export async function getOrderByToken(orderToken: string) {
         currency_symbol
       ),
       order_items (
+        id,
+        menu_item_id,
         item_name_snapshot,
         quantity,
         status,

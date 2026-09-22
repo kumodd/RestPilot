@@ -53,7 +53,7 @@ interface Props {
 }
 
 export default function OrderTrackingClient({ orderToken }: Props) {
-  const { order, isLoading, error } = useOrderTracking(orderToken)
+  const { order, isLoading, error, refetch } = useOrderTracking(orderToken)
   const supabase = createClient()
   const [billRequested, setBillRequested] = useState(false)
   const [billError, setBillError] = useState<string | null>(null)
@@ -66,6 +66,10 @@ export default function OrderTrackingClient({ orderToken }: Props) {
   const [serviceError, setServiceError] = useState<string | null>(null)
   const [tableToken, setTableToken] = useState<string | null>(null)
   const [notificationsEnabled, setNotificationsEnabled] = useState(false)
+  const [isEditingOrder, setIsEditingOrder] = useState(false)
+  const [draftQuantities, setDraftQuantities] = useState<Record<string, number>>({})
+  const [isSavingEdit, setIsSavingEdit] = useState(false)
+  const [editError, setEditError] = useState<string | null>(null)
   const previousStatusRef = useRef<OrderStatus | null>(null)
 
   useEffect(() => {
@@ -136,6 +140,37 @@ export default function OrderTrackingClient({ orderToken }: Props) {
     if (typeof window === 'undefined' || !('Notification' in window)) return
     const permission = await window.Notification.requestPermission()
     setNotificationsEnabled(permission === 'granted')
+  }
+
+  const beginEditingOrder = () => {
+    if (!order) return
+    setDraftQuantities(Object.fromEntries(order.items.map(item => [item.id, item.quantity])))
+    setEditError(null)
+    setIsEditingOrder(true)
+  }
+
+  const saveOrderEdits = async () => {
+    if (!order) return
+    setIsSavingEdit(true)
+    setEditError(null)
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error: rpcError } = await (supabase.rpc as any)('update_customer_order', {
+      p_order_token: orderToken,
+      p_items: order.items.map(item => ({
+        order_item_id: item.id,
+        quantity: draftQuantities[item.id] ?? item.quantity,
+        special_instructions: item.special_instructions,
+      })),
+    })
+
+    if (rpcError || data?.error) {
+      setEditError(rpcError?.message ?? data?.error ?? 'Unable to update your order')
+    } else {
+      setIsEditingOrder(false)
+      await refetch()
+    }
+    setIsSavingEdit(false)
   }
 
   const submitFeedback = async () => {
@@ -285,6 +320,9 @@ export default function OrderTrackingClient({ orderToken }: Props) {
 
           {!isTerminal && (
             <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              <button type="button" onClick={beginEditingOrder} style={{ padding: '9px 16px', borderRadius: '999px', border: '1px solid rgba(255,255,255,0.16)', background: 'rgba(255,255,255,0.08)', color: '#F5F5F5', cursor: 'pointer', fontWeight: 700 }}>
+                Edit order
+              </button>
               <button type="button" onClick={() => void requestBill()} disabled={billRequested} style={{ padding: '9px 16px', borderRadius: '999px', border: '1px solid rgba(255,255,255,0.16)', background: billRequested ? 'rgba(34,197,94,0.12)' : 'rgba(255,255,255,0.08)', color: billRequested ? '#86EFAC' : '#F5F5F5', cursor: billRequested ? 'default' : 'pointer', fontWeight: 700 }}>
                 {billRequested ? '✓ Bill requested' : 'Request bill'}
               </button>
@@ -317,7 +355,7 @@ export default function OrderTrackingClient({ orderToken }: Props) {
 
           {tableToken && (
             <Link
-              href={`/t/${tableToken}/menu`}
+              href={`/t/${tableToken}/menu?order=${encodeURIComponent(orderToken)}`}
               style={{ display: 'block', color: '#A3A3A3', fontSize: '0.8rem', marginTop: '14px', textDecoration: 'underline' }}
             >
               Add more items
@@ -449,9 +487,11 @@ export default function OrderTrackingClient({ orderToken }: Props) {
           Order Items
         </h2>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          {order.items.map((item, idx) => (
+          {order.items.map(item => {
+            const draftQuantity = draftQuantities[item.id] ?? item.quantity
+            return (
             <div
-              key={idx}
+              key={item.id}
               style={{
                 display: 'flex',
                 justifyContent: 'space-between',
@@ -464,7 +504,7 @@ export default function OrderTrackingClient({ orderToken }: Props) {
             >
               <div>
                 <span style={{ fontWeight: 600, color: '#F5F5F5', fontSize: '0.9rem' }}>
-                  {item.quantity}× {item.name}
+                  {isEditingOrder ? draftQuantity : item.quantity}× {item.name}
                 </span>
                 {item.special_instructions && (
                   <p style={{ fontSize: '0.75rem', color: '#737373', marginTop: '2px' }}>
@@ -472,25 +512,57 @@ export default function OrderTrackingClient({ orderToken }: Props) {
                   </p>
                 )}
               </div>
-              <span
-                style={{
-                  fontSize: '0.72rem',
-                  fontWeight: 600,
-                  padding: '3px 8px',
-                  borderRadius: '999px',
-                  background: item.status === 'ready' ? 'rgba(34,197,94,0.12)' : item.status === 'preparing' ? 'rgba(255,107,53,0.12)' : 'rgba(255,255,255,0.06)',
-                  color: item.status === 'ready' ? '#22C55E' : item.status === 'preparing' ? '#FF6B35' : '#737373',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.06em',
-                  flexShrink: 0,
-                  marginLeft: '8px',
-                }}
-              >
-                {item.status}
-              </span>
+              {isEditingOrder ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginLeft: '8px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setDraftQuantities(previous => ({ ...previous, [item.id]: Math.max(0, draftQuantity - 1) }))}
+                    style={{ width: '28px', height: '28px', borderRadius: '50%', border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.06)', color: draftQuantity === 0 ? '#FCA5A5' : '#D4D4D4', cursor: 'pointer', fontSize: '1rem' }}
+                    aria-label={`Decrease ${item.name}`}
+                  >
+                    {draftQuantity === 1 ? '🗑' : '−'}
+                  </button>
+                  <span style={{ minWidth: '18px', textAlign: 'center', color: '#F5F5F5', fontWeight: 700 }}>{draftQuantity}</span>
+                  <button
+                    type="button"
+                    onClick={() => setDraftQuantities(previous => ({ ...previous, [item.id]: Math.min(200, draftQuantity + 1) }))}
+                    style={{ width: '28px', height: '28px', borderRadius: '50%', border: 'none', background: '#FF6B35', color: 'white', cursor: 'pointer', fontSize: '1rem' }}
+                    aria-label={`Increase ${item.name}`}
+                  >
+                    +
+                  </button>
+                </div>
+              ) : (
+                <span
+                  style={{
+                    fontSize: '0.72rem',
+                    fontWeight: 600,
+                    padding: '3px 8px',
+                    borderRadius: '999px',
+                    background: item.status === 'ready' ? 'rgba(34,197,94,0.12)' : item.status === 'preparing' ? 'rgba(255,107,53,0.12)' : 'rgba(255,255,255,0.06)',
+                    color: item.status === 'ready' ? '#22C55E' : item.status === 'preparing' ? '#FF6B35' : '#737373',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.06em',
+                    flexShrink: 0,
+                    marginLeft: '8px',
+                  }}
+                >
+                  {item.status}
+                </span>
+              )}
             </div>
-          ))}
+            )
+          })}
         </div>
+        {isEditingOrder && (
+          <div style={{ marginTop: '14px' }}>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button type="button" onClick={() => setIsEditingOrder(false)} disabled={isSavingEdit} style={{ flex: 1, padding: '12px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.04)', color: '#A3A3A3', cursor: 'pointer', fontWeight: 700 }}>Cancel</button>
+              <button type="button" onClick={() => void saveOrderEdits()} disabled={isSavingEdit} style={{ flex: 1, padding: '12px', borderRadius: '10px', border: 'none', background: isSavingEdit ? 'rgba(255,107,53,0.5)' : '#FF6B35', color: 'white', cursor: isSavingEdit ? 'wait' : 'pointer', fontWeight: 800 }}>{isSavingEdit ? 'Saving…' : 'Save changes'}</button>
+            </div>
+            {editError && <p style={{ color: '#FCA5A5', fontSize: '0.75rem', marginTop: '8px' }}>{editError}</p>}
+          </div>
+        )}
       </div>
 
       {/* Price Summary */}

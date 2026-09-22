@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useCallback } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import { formatPrice } from '@/lib/utils/price'
 import { useCart } from '@/lib/hooks/useCart'
@@ -60,6 +61,8 @@ interface Props {
 
 export default function MenuPageClient({ resolution, categories, settings, tableToken }: Props) {
   const { restaurant, branch, table } = resolution
+  const searchParams = useSearchParams()
+  const existingOrderToken = searchParams.get('order')
   const [activeCategory, setActiveCategory] = useState<string>(categories[0]?.id ?? '')
   const [customizerItem, setCustomizerItem] = useState<MenuItem | null>(null)
   const [cartOpen, setCartOpen] = useState(false)
@@ -594,6 +597,7 @@ export default function MenuPageClient({ resolution, categories, settings, table
           settings={settings}
           customerData={customerData}
           tableToken={tableToken}
+          existingOrderToken={existingOrderToken}
           onClose={() => setCartOpen(false)}
         />
       )}

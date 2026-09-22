@@ -28,7 +28,7 @@ export function useOrderTracking(orderToken: string) {
         status: string
         restaurant_tables: { table_number: string } | null
         restaurants: { currency_symbol: string } | null
-        order_items: Array<{ item_name_snapshot: string; quantity: number; status: string; special_instructions: string | null }>
+        order_items: Array<{ id: string; menu_item_id: string | null; item_name_snapshot: string; quantity: number; status: string; special_instructions: string | null }>
         subtotal: number
         tax: number
         service_charge: number
@@ -48,6 +48,8 @@ export function useOrderTracking(orderToken: string) {
         status: anyData.status as OrderTracking['status'],
         table_number: tableData?.table_number ?? '',
         items: (anyData.order_items ?? []).map(item => ({
+          id: item.id,
+          menu_item_id: item.menu_item_id,
           name: item.item_name_snapshot,
           quantity: item.quantity,
           status: item.status as OrderTracking['items'][0]['status'],
@@ -76,7 +78,11 @@ export function useOrderTracking(orderToken: string) {
 
 
   useEffect(() => {
-    void fetchOrder()
+    const timer = setTimeout(() => {
+      void fetchOrder()
+    }, 0)
+
+    return () => clearTimeout(timer)
   }, [fetchOrder])
 
   // Polling fallback since RLS blocks customer from using Realtime
