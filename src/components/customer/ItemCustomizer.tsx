@@ -132,7 +132,7 @@ export default function ItemCustomizer({ item, restaurant, onClose, onAddToCart 
           bottom: 0,
           left: 0,
           right: 0,
-          background: '#1A1A2E',
+          background: '#FFFFFF',
           borderRadius: '24px 24px 0 0',
           zIndex: 1001,
           maxHeight: '92vh',
@@ -146,7 +146,7 @@ export default function ItemCustomizer({ item, restaurant, onClose, onAddToCart 
           style={{
             width: '36px',
             height: '4px',
-            background: 'rgba(255,255,255,0.15)',
+            background: '#D4D4D8',
             borderRadius: '999px',
             margin: '12px auto',
           }}
@@ -165,7 +165,7 @@ export default function ItemCustomizer({ item, restaurant, onClose, onAddToCart 
               style={{
                 position: 'absolute',
                 inset: 0,
-                background: 'linear-gradient(to bottom, rgba(26,26,46,0) 40%, rgba(26,26,46,0.8) 80%, #1A1A2E 100%)',
+                background: 'linear-gradient(to bottom, rgba(255,255,255,0) 40%, rgba(255,255,255,0.2) 80%, #FFFFFF 100%)',
               }}
             />
           </div>
@@ -175,7 +175,7 @@ export default function ItemCustomizer({ item, restaurant, onClose, onAddToCart 
 
         <div style={{ padding: '20px 20px 0' }}>
           {/* Item Name & Description */}
-          <h2 style={{ fontSize: '1.3rem', fontWeight: 700, color: '#F5F5F5', marginBottom: '8px' }}>
+          <h2 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#171717', marginBottom: '8px' }}>
             {item.name}
           </h2>
           {item.description && (
@@ -184,7 +184,7 @@ export default function ItemCustomizer({ item, restaurant, onClose, onAddToCart 
             </p>
           )}
 
-          <div style={{ fontWeight: 700, fontSize: '1.1rem', color: '#F5F5F5', marginBottom: '24px' }}>
+          <div style={{ fontWeight: 800, fontSize: '1.1rem', color: '#171717', marginBottom: '24px' }}>
             {formatPrice(item.base_price, restaurant.currency_symbol)}
           </div>
         </div>
@@ -194,12 +194,12 @@ export default function ItemCustomizer({ item, restaurant, onClose, onAddToCart 
           const options = variant.options as VariantOption[]
           const selected = selectedVariants.find(sv => sv.variantId === variant.id)
           return (
-            <div key={variant.id} style={{ padding: '0 20px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+            <div key={variant.id} style={{ padding: '0 20px 20px', borderBottom: '1px solid rgba(23,23,23,0.08)' }}>
               <h3
                 style={{
                   fontSize: '0.85rem',
                   fontWeight: 700,
-                  color: '#A3A3A3',
+                  color: '#737373',
                   textTransform: 'uppercase',
                   letterSpacing: '0.08em',
                   marginBottom: '12px',
@@ -214,7 +214,7 @@ export default function ItemCustomizer({ item, restaurant, onClose, onAddToCart 
                     style={{
                       fontSize: '0.65rem',
                       background: 'rgba(239,68,68,0.15)',
-                      color: '#FCA5A5',
+                      color: '#B91C1C',
                       padding: '2px 8px',
                       borderRadius: '999px',
                       textTransform: 'uppercase',
@@ -236,8 +236,8 @@ export default function ItemCustomizer({ item, restaurant, onClose, onAddToCart 
                         alignItems: 'center',
                         justifyContent: 'space-between',
                         padding: '12px 14px',
-                        background: isSelected ? `${primaryColor}18` : 'rgba(255,255,255,0.04)',
-                        border: `1.5px solid ${isSelected ? primaryColor : 'rgba(255,255,255,0.08)'}`,
+                        background: isSelected ? `${primaryColor}12` : '#FFFFFF',
+                        border: `1.5px solid ${isSelected ? primaryColor : 'rgba(23,23,23,0.1)'}`,
                         borderRadius: '12px',
                         cursor: 'pointer',
                         transition: 'all 0.15s ease',
@@ -249,7 +249,7 @@ export default function ItemCustomizer({ item, restaurant, onClose, onAddToCart 
                             width: '18px',
                             height: '18px',
                             borderRadius: '50%',
-                            border: `2px solid ${isSelected ? primaryColor : 'rgba(255,255,255,0.2)'}`,
+                            border: `2px solid ${isSelected ? primaryColor : 'rgba(23,23,23,0.2)'}`,
                             background: isSelected ? primaryColor : 'transparent',
                             display: 'flex',
                             alignItems: 'center',
@@ -261,12 +261,12 @@ export default function ItemCustomizer({ item, restaurant, onClose, onAddToCart 
                             <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: 'white' }} />
                           )}
                         </div>
-                        <span style={{ fontSize: '0.9rem', fontWeight: 500, color: isSelected ? '#F5F5F5' : '#A3A3A3' }}>
+                        <span style={{ fontSize: '0.9rem', fontWeight: 600, color: isSelected ? '#171717' : '#525252' }}>
                           {option.name}
                         </span>
                       </div>
                       {option.price_delta !== 0 && (
-                        <span style={{ fontSize: '0.85rem', color: isSelected ? primaryColor : '#737373', fontWeight: 600 }}>
+                        <span style={{ fontSize: '0.85rem', color: isSelected ? primaryColor : '#737373', fontWeight: 700 }}>
                           {option.price_delta > 0 ? '+' : ''}
                           {formatPrice(option.price_delta, restaurant.currency_symbol)}
                         </span>
@@ -281,12 +281,12 @@ export default function ItemCustomizer({ item, restaurant, onClose, onAddToCart 
 
         {/* Add-ons */}
         {item.menu_addons.filter(a => a.is_active).length > 0 && (
-          <div style={{ padding: '20px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+          <div style={{ padding: '20px', borderBottom: '1px solid rgba(23,23,23,0.08)' }}>
             <h3
               style={{
                 fontSize: '0.85rem',
                 fontWeight: 700,
-                color: '#A3A3A3',
+                color: '#737373',
                 textTransform: 'uppercase',
                 letterSpacing: '0.08em',
                 marginBottom: '12px',
@@ -306,8 +306,8 @@ export default function ItemCustomizer({ item, restaurant, onClose, onAddToCart 
                       alignItems: 'center',
                       justifyContent: 'space-between',
                       padding: '12px 14px',
-                      background: isSelected ? `${primaryColor}18` : 'rgba(255,255,255,0.04)',
-                      border: `1.5px solid ${isSelected ? primaryColor : 'rgba(255,255,255,0.08)'}`,
+                      background: isSelected ? `${primaryColor}12` : '#FFFFFF',
+                      border: `1.5px solid ${isSelected ? primaryColor : 'rgba(23,23,23,0.1)'}`,
                       borderRadius: '12px',
                       cursor: 'pointer',
                     }}
@@ -318,7 +318,7 @@ export default function ItemCustomizer({ item, restaurant, onClose, onAddToCart 
                           width: '18px',
                           height: '18px',
                           borderRadius: '4px',
-                          border: `2px solid ${isSelected ? primaryColor : 'rgba(255,255,255,0.2)'}`,
+                          border: `2px solid ${isSelected ? primaryColor : 'rgba(23,23,23,0.2)'}`,
                           background: isSelected ? primaryColor : 'transparent',
                           display: 'flex',
                           alignItems: 'center',
@@ -329,7 +329,7 @@ export default function ItemCustomizer({ item, restaurant, onClose, onAddToCart 
                       >
                         {isSelected && '✓'}
                       </div>
-                      <span style={{ fontSize: '0.9rem', fontWeight: 500, color: isSelected ? '#F5F5F5' : '#A3A3A3' }}>
+                      <span style={{ fontSize: '0.9rem', fontWeight: 600, color: isSelected ? '#171717' : '#525252' }}>
                         {addon.name}
                       </span>
                     </div>
@@ -344,12 +344,12 @@ export default function ItemCustomizer({ item, restaurant, onClose, onAddToCart 
         )}
 
         {/* Special Instructions */}
-        <div style={{ padding: '20px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+        <div style={{ padding: '20px', borderBottom: '1px solid rgba(23,23,23,0.08)' }}>
           <h3
             style={{
               fontSize: '0.85rem',
               fontWeight: 700,
-              color: '#A3A3A3',
+              color: '#737373',
               textTransform: 'uppercase',
               letterSpacing: '0.08em',
               marginBottom: '12px',
@@ -365,10 +365,10 @@ export default function ItemCustomizer({ item, restaurant, onClose, onAddToCart 
             style={{
               width: '100%',
               padding: '12px',
-              background: 'rgba(255,255,255,0.04)',
-              border: '1px solid rgba(255,255,255,0.08)',
+              background: '#F7F7F8',
+              border: '1px solid rgba(23,23,23,0.12)',
               borderRadius: '12px',
-              color: '#F5F5F5',
+              color: '#171717',
               fontSize: '0.9rem',
               fontFamily: 'inherit',
               resize: 'none',
@@ -393,8 +393,8 @@ export default function ItemCustomizer({ item, restaurant, onClose, onAddToCart 
               display: 'flex',
               alignItems: 'center',
               gap: '12px',
-              background: 'rgba(255,255,255,0.06)',
-              border: '1.5px solid rgba(255,255,255,0.12)',
+              background: '#F4F4F5',
+              border: '1.5px solid rgba(23,23,23,0.1)',
               borderRadius: '999px',
               padding: '4px',
             }}
@@ -417,7 +417,7 @@ export default function ItemCustomizer({ item, restaurant, onClose, onAddToCart 
             >
               −
             </button>
-            <span style={{ fontWeight: 700, fontSize: '1rem', color: '#F5F5F5', minWidth: '20px', textAlign: 'center' }}>
+            <span style={{ fontWeight: 800, fontSize: '1rem', color: '#171717', minWidth: '20px', textAlign: 'center' }}>
               {quantity}
             </span>
             <button

@@ -129,7 +129,7 @@ export default function MenuPageClient({ resolution, categories, settings, table
         restaurant={restaurant}
         title={table.display_name ?? `Table ${table.table_number}`}
         subtitle={branch.name}
-        backHref={`/t/${tableToken}`}
+        backHref={existingOrderToken ? `/order/${existingOrderToken}` : `/t/${tableToken}`}
         right={(
           <button
             type="button"
@@ -213,7 +213,7 @@ export default function MenuPageClient({ resolution, categories, settings, table
             </div>
             <span
               style={{
-                color: restaurant.is_accepting_orders ? '#86EFAC' : '#FCA5A5',
+                color: restaurant.is_accepting_orders ? '#15803D' : '#B91C1C',
                 background: restaurant.is_accepting_orders ? 'rgba(34,197,94,0.12)' : 'rgba(239,68,68,0.12)',
                 border: `1px solid ${restaurant.is_accepting_orders ? 'rgba(34,197,94,0.22)' : 'rgba(239,68,68,0.22)'}`,
                 borderRadius: '999px',
@@ -276,7 +276,7 @@ export default function MenuPageClient({ resolution, categories, settings, table
         {spotlightItems.length > 0 && !searchQuery && dietaryFilter === 'all' && !popularOnly && (
           <section style={{ padding: '16px 16px 4px' }}>
             <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: '10px' }}>
-              <h2 style={{ color: '#F5F5F5', fontSize: '1rem', fontWeight: 800 }}>Popular picks</h2>
+              <h2 style={{ color: '#262626', fontSize: '1rem', fontWeight: 800 }}>Popular picks</h2>
               <span style={{ color: '#737373', fontSize: '0.72rem' }}>{availableItemCount} items available</span>
             </div>
             <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', scrollbarWidth: 'none', paddingBottom: '4px' }}>
@@ -377,7 +377,7 @@ export default function MenuPageClient({ resolution, categories, settings, table
                           </span>
                         )}
                         {item.spice_level && item.spice_level !== 'none' && (
-                          <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#FCA5A5', background: 'rgba(239,68,68,0.1)', padding: '2px 8px', borderRadius: '4px' }}>
+                          <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#B91C1C', background: 'rgba(239,68,68,0.1)', padding: '2px 8px', borderRadius: '4px' }}>
                             🌶️ {item.spice_level.replace('_', ' ')}
                           </span>
                         )}
@@ -419,8 +419,8 @@ export default function MenuPageClient({ resolution, categories, settings, table
                         overflow: 'hidden',
                         position: 'relative',
                         boxShadow: '0 8px 16px rgba(0,0,0,0.2)',
-                        background: 'linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%)',
-                        border: '1px solid rgba(255,255,255,0.05)',
+                        background: 'linear-gradient(135deg, #FAFAFA 0%, #F4F4F5 100%)',
+                        border: '1px solid rgba(23,23,23,0.06)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -498,7 +498,7 @@ export default function MenuPageClient({ resolution, categories, settings, table
             }}
           >
             <div style={{ fontSize: '3rem', marginBottom: '16px' }}>🔍</div>
-            <p style={{ fontWeight: 600, color: '#A3A3A3' }}>No items found</p>
+            <p style={{ fontWeight: 600, color: '#737373' }}>No items found</p>
             <p style={{ fontSize: '0.85rem', marginTop: '8px' }}>
               Try a different search term
             </p>

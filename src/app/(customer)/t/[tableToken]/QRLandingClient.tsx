@@ -106,8 +106,8 @@ export default function QRLandingClient({ resolution, tableToken }: Props) {
               borderRadius: '20px',
               overflow: 'hidden',
               margin: '0 auto 24px',
-              border: '2px solid rgba(255,255,255,0.15)',
-              boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+              border: '2px solid rgba(23,23,23,0.08)',
+              boxShadow: '0 8px 24px rgba(23,23,23,0.12)',
             }}
           >
             <Image
@@ -130,7 +130,7 @@ export default function QRLandingClient({ resolution, tableToken }: Props) {
               justifyContent: 'center',
               fontSize: '2.2rem',
               margin: '0 auto 24px',
-              boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+              boxShadow: '0 8px 24px rgba(23,23,23,0.12)',
             }}
           >
             🍽️
@@ -240,7 +240,7 @@ export default function QRLandingClient({ resolution, tableToken }: Props) {
               background: 'rgba(239,68,68,0.12)',
               border: '1px solid rgba(239,68,68,0.25)',
               borderRadius: '16px',
-              color: '#FCA5A5',
+              color: '#B91C1C',
             }}
           >
             <div style={{ fontSize: '1.5rem', marginBottom: '8px' }}>😔</div>
@@ -360,7 +360,7 @@ export default function QRLandingClient({ resolution, tableToken }: Props) {
           style={{
             marginTop: '32px',
             fontSize: '0.72rem',
-            color: '#A3A3A3',
+            color: '#737373',
             letterSpacing: '0.04em',
           }}
         >

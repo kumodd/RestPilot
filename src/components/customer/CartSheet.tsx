@@ -140,7 +140,7 @@ export default function CartSheet({
           bottom: 0,
           left: 0,
           right: 0,
-          background: '#1A1A2E',
+          background: '#FFFFFF',
           borderRadius: '24px 24px 0 0',
           zIndex: 1001,
           maxHeight: '96vh',
@@ -150,13 +150,13 @@ export default function CartSheet({
         }}
       >
         {/* Handle */}
-        <div style={{ width: '36px', height: '4px', background: 'rgba(255,255,255,0.15)', borderRadius: '999px', margin: '12px auto' }} />
+        <div style={{ width: '36px', height: '4px', background: '#D4D4D8', borderRadius: '999px', margin: '12px auto' }} />
 
         <div style={{ padding: '0 20px' }}>
           {/* Header */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
             <div>
-              <h2 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#F5F5F5' }}>{existingOrderToken ? 'Add to live order' : 'Your Order'}</h2>
+              <h2 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#171717' }}>{existingOrderToken ? 'Add to live order' : 'Your Order'}</h2>
               <p style={{ fontSize: '0.8rem', color: '#737373' }}>
                 {existingOrderToken ? 'These items will be sent to the kitchen' : `${table.display_name ?? `Table ${table.table_number}`} · ${restaurant.name}`}
               </p>
@@ -167,9 +167,9 @@ export default function CartSheet({
                 width: '32px',
                 height: '32px',
                 borderRadius: '50%',
-                background: 'rgba(255,255,255,0.08)',
+                background: '#F4F4F5',
                 border: 'none',
-                color: '#A3A3A3',
+                color: '#525252',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
@@ -191,13 +191,13 @@ export default function CartSheet({
                   alignItems: 'center',
                   gap: '12px',
                   padding: '12px',
-                  background: 'rgba(255,255,255,0.04)',
+                  background: '#FFFFFF',
                   borderRadius: '12px',
-                  border: '1px solid rgba(255,255,255,0.06)',
+                  border: '1px solid rgba(23,23,23,0.07)',
                 }}
               >
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontWeight: 600, fontSize: '0.9rem', color: '#F5F5F5' }}>{item.name}</p>
+                  <p style={{ fontWeight: 700, fontSize: '0.9rem', color: '#171717' }}>{item.name}</p>
                   {item.selectedVariants.length > 0 && (
                     <p style={{ fontSize: '0.75rem', color: '#737373' }}>
                       {item.selectedVariants.map(v => v.optionName).join(', ')}
@@ -227,9 +227,9 @@ export default function CartSheet({
                       width: '28px',
                       height: '28px',
                       borderRadius: '50%',
-                      background: 'rgba(255,255,255,0.08)',
+                      background: '#F4F4F5',
                       border: 'none',
-                      color: item.quantity === 1 ? '#EF4444' : '#A3A3A3',
+                      color: item.quantity === 1 ? '#DC2626' : '#525252',
                       cursor: 'pointer',
                       fontSize: '1rem',
                       display: 'flex',
@@ -239,7 +239,7 @@ export default function CartSheet({
                   >
                     {item.quantity === 1 ? '🗑' : '−'}
                   </button>
-                  <span style={{ fontWeight: 700, fontSize: '0.9rem', color: '#F5F5F5', minWidth: '16px', textAlign: 'center' }}>
+                  <span style={{ fontWeight: 700, fontSize: '0.9rem', color: '#171717', minWidth: '16px', textAlign: 'center' }}>
                     {item.quantity}
                   </span>
                   <button
@@ -268,14 +268,14 @@ export default function CartSheet({
           {/* Customer Info */}
           <div
             style={{
-              background: 'rgba(255,255,255,0.03)',
-              border: '1px solid rgba(255,255,255,0.06)',
+              background: '#FAFAFA',
+              border: '1px solid rgba(23,23,23,0.07)',
               borderRadius: '16px',
               padding: '16px',
               marginBottom: '16px',
             }}
           >
-            <h3 style={{ fontSize: '0.82rem', fontWeight: 700, color: '#A3A3A3', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '14px' }}>
+            <h3 style={{ fontSize: '0.82rem', fontWeight: 800, color: '#737373', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '14px' }}>
               Your Details
             </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -286,10 +286,10 @@ export default function CartSheet({
                 onChange={e => setName(e.target.value)}
                 style={{
                   padding: '10px 14px',
-                  background: 'rgba(255,255,255,0.05)',
-                  border: '1px solid rgba(255,255,255,0.1)',
+                  background: '#FFFFFF',
+                  border: '1px solid rgba(23,23,23,0.12)',
                   borderRadius: '10px',
-                  color: '#F5F5F5',
+                  color: '#171717',
                   fontSize: '0.9rem',
                   fontFamily: 'inherit',
                   outline: 'none',
@@ -302,10 +302,10 @@ export default function CartSheet({
                 onChange={e => setPhone(e.target.value)}
                 style={{
                   padding: '10px 14px',
-                  background: 'rgba(255,255,255,0.05)',
-                  border: `1px solid ${error && settings?.customer_phone_required && !phone ? 'rgba(239,68,68,0.5)' : 'rgba(255,255,255,0.1)'}`,
+                  background: '#FFFFFF',
+                  border: `1px solid ${error && settings?.customer_phone_required && !phone ? 'rgba(239,68,68,0.5)' : 'rgba(23,23,23,0.12)'}`,
                   borderRadius: '10px',
-                  color: '#F5F5F5',
+                  color: '#171717',
                   fontSize: '0.9rem',
                   fontFamily: 'inherit',
                   outline: 'none',
@@ -318,10 +318,10 @@ export default function CartSheet({
                 maxLength={300}
                 style={{
                   padding: '10px 14px',
-                  background: 'rgba(255,255,255,0.05)',
-                  border: '1px solid rgba(255,255,255,0.1)',
+                  background: '#FFFFFF',
+                  border: '1px solid rgba(23,23,23,0.12)',
                   borderRadius: '10px',
-                  color: '#F5F5F5',
+                  color: '#171717',
                   fontSize: '0.9rem',
                   fontFamily: 'inherit',
                   resize: 'none',
@@ -341,26 +341,26 @@ export default function CartSheet({
           {/* Price Summary */}
           <div
             style={{
-              background: 'rgba(255,255,255,0.03)',
-              border: '1px solid rgba(255,255,255,0.06)',
+              background: '#FAFAFA',
+              border: '1px solid rgba(23,23,23,0.07)',
               borderRadius: '16px',
               padding: '16px',
               marginBottom: '16px',
             }}
           >
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.88rem', color: '#A3A3A3' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.88rem', color: '#737373' }}>
                 <span>Subtotal ({cart.totalItems} items)</span>
                 <span>{formatPrice(cart.subtotal, restaurant.currency_symbol)}</span>
               </div>
               {displayTax > 0 && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.88rem', color: '#A3A3A3' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.88rem', color: '#737373' }}>
                   <span>{settings?.tax_label ?? 'Tax'} ({settings?.tax_percentage}%)</span>
                   <span>{formatPrice(displayTax, restaurant.currency_symbol)}</span>
                 </div>
               )}
               {displaySC > 0 && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.88rem', color: '#A3A3A3' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.88rem', color: '#737373' }}>
                   <span>{settings?.service_charge_label ?? 'Service Charge'} ({settings?.service_charge_percentage}%)</span>
                   <span>{formatPrice(displaySC, restaurant.currency_symbol)}</span>
                 </div>
@@ -371,9 +371,9 @@ export default function CartSheet({
                   justifyContent: 'space-between',
                   fontWeight: 700,
                   fontSize: '1rem',
-                  color: '#F5F5F5',
+                  color: '#171717',
                   paddingTop: '8px',
-                  borderTop: '1px solid rgba(255,255,255,0.06)',
+                  borderTop: '1px solid rgba(23,23,23,0.08)',
                   marginTop: '4px',
                 }}
               >
@@ -393,7 +393,7 @@ export default function CartSheet({
                 padding: '12px',
                 marginBottom: '16px',
                 fontSize: '0.85rem',
-                color: '#FCA5A5',
+                color: '#B91C1C',
               }}
             >
               ⚠️ {error}

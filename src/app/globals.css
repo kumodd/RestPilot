@@ -1465,9 +1465,7 @@ a {
 }
 
 .customer-cart-sheet h2,
-.customer-cart-sheet h3,
-.customer-cart-sheet p,
-.customer-cart-sheet span { color: #262626; }
+.customer-cart-sheet h3 { color: #262626; }
 
 .customer-cart-sheet h3 { color: #737373 !important; }
 .customer-cart-sheet input,
@@ -1489,9 +1487,7 @@ a {
 }
 
 .customer-item-customizer h2,
-.customer-item-customizer h3,
-.customer-item-customizer p,
-.customer-item-customizer span { color: #262626; }
+.customer-item-customizer h3 { color: #262626; }
 
 .customer-item-customizer h3 { color: #737373 !important; }
 .customer-item-customizer textarea { background: #f7f7f8 !important; color: #171717 !important; border-color: rgba(23, 23, 23, 0.12) !important; }
@@ -1510,6 +1506,57 @@ a {
 .customer-tracking-page .customer-tracking-item-title { color: #171717 !important; }
 .customer-tracking-page .customer-tracking-step-title { color: #262626 !important; }
 .customer-tracking-page textarea { background: #f7f7f8 !important; color: #171717 !important; border-color: rgba(23, 23, 23, 0.12) !important; }
+
+.customer-tracking-back {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 11px 8px 8px;
+  border: 1px solid rgba(23, 23, 23, 0.08);
+  border-radius: 999px;
+  color: #525252;
+  background: rgba(255, 255, 255, 0.9);
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-decoration: none;
+  box-shadow: 0 4px 12px rgba(23, 23, 23, 0.06);
+}
+
+.customer-tracking-back:hover { background: #f4f4f5; }
+.customer-landing-page input::placeholder { color: #8a8a8f; }
+
+.customer-state-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: #f7f7f8;
+  color: #171717;
+}
+
+.customer-state-card {
+  width: min(100%, 360px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 13px;
+  padding: 32px 24px;
+  text-align: center;
+  background: #fff;
+  border: 1px solid rgba(23, 23, 23, 0.07);
+  border-radius: 22px;
+  box-shadow: 0 12px 30px rgba(23, 23, 23, 0.07);
+}
+
+.customer-state-card h2 { color: #171717; font-size: 1.12rem; font-weight: 800; }
+.customer-state-card p { color: #737373; font-size: 0.86rem; line-height: 1.5; }
+.customer-state-icon { font-size: 2.3rem; }
+.customer-spinner { width: 30px; height: 30px; border: 3px solid #e5e5e5; border-top-color: var(--restaurant-primary, #ff6b35); border-radius: 50%; animation: spin 0.7s linear infinite; }
+.customer-error-card .btn { margin-top: 6px; }
 
 @media (min-width: 700px) {
   .customer-bottom-nav { left: 50%; right: auto; width: 520px; transform: translateX(-50%); border: 1px solid rgba(23, 23, 23, 0.08); border-bottom: none; border-radius: 18px 18px 0 0; }

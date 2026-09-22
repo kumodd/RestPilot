@@ -8,6 +8,7 @@ import { ORDER_STATUS_CONFIG } from '@/lib/types/app.types'
 import type { OrderStatus } from '@/lib/types/database.types'
 import { format } from 'date-fns'
 import { useEffect, useRef, useState } from 'react'
+import { ArrowLeft } from 'lucide-react'
 import CustomerBottomNav from '@/components/customer/CustomerBottomNav'
 
 type ServiceRequestType = 'waiter' | 'water' | 'cutlery' | 'cleaning'
@@ -193,54 +194,23 @@ export default function OrderTrackingClient({ orderToken }: Props) {
 
   if (isLoading) {
     return (
-      <div
-        style={{
-          minHeight: '100vh',
-          background: '#0F0F1A',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexDirection: 'column',
-          gap: '16px',
-        }}
-      >
-        <div
-          style={{
-            width: '40px',
-            height: '40px',
-            border: '3px solid rgba(255,255,255,0.1)',
-            borderTopColor: '#FF6B35',
-            borderRadius: '50%',
-            animation: 'spin 0.7s linear infinite',
-          }}
-        />
-        <p style={{ color: '#737373', fontSize: '0.9rem' }}>Loading your order...</p>
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      <div className="customer-state-page">
+        <div className="customer-state-card">
+          <div className="customer-spinner" />
+          <p>Loading your order…</p>
+        </div>
       </div>
     )
   }
 
   if (error || !order) {
     return (
-      <div
-        style={{
-          minHeight: '100vh',
-          background: '#0F0F1A',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '24px',
-          textAlign: 'center',
-        }}
-      >
-        <div style={{ fontSize: '3rem', marginBottom: '16px' }}>😔</div>
-        <h1 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#F5F5F5', marginBottom: '8px' }}>
-          Order Not Found
-        </h1>
-        <p style={{ color: '#737373', fontSize: '0.875rem', maxWidth: '280px' }}>
-          We couldn&apos;t find this order. Please scan the QR code again to start a new order.
-        </p>
+      <div className="customer-state-page">
+        <div className="customer-state-card">
+          <div className="customer-state-icon">😔</div>
+          <h2>Order not found</h2>
+          <p>We couldn&apos;t find this order. Please scan the QR code again to start a new order.</p>
+        </div>
       </div>
     )
   }
@@ -256,9 +226,9 @@ export default function OrderTrackingClient({ orderToken }: Props) {
         className="customer-tracking-hero"
         style={{
           background: '#FFFFFF',
-          padding: '40px 20px 32px',
+          padding: tableToken ? '58px 20px 32px' : '40px 20px 32px',
           textAlign: 'center',
-          borderBottom: '1px solid rgba(255,255,255,0.06)',
+          borderBottom: '1px solid rgba(23,23,23,0.07)',
           position: 'relative',
           overflow: 'hidden',
         }}
@@ -277,6 +247,16 @@ export default function OrderTrackingClient({ orderToken }: Props) {
         />
 
         <div style={{ position: 'relative', zIndex: 1 }}>
+          {tableToken && (
+            <Link
+              href={`/t/${tableToken}/menu?order=${encodeURIComponent(orderToken)}`}
+              className="customer-tracking-back"
+            >
+              <ArrowLeft size={15} strokeWidth={2.4} />
+              Menu
+            </Link>
+          )}
+
           {/* Live indicator */}
           {!isTerminal && (
             <div
@@ -310,7 +290,7 @@ export default function OrderTrackingClient({ orderToken }: Props) {
             Order #{order.order_number}
           </div>
 
-          <div style={{ fontSize: '0.95rem', color: '#A3A3A3', marginBottom: '20px' }}>
+          <div style={{ fontSize: '0.95rem', color: '#737373', marginBottom: '20px' }}>
             Table {order.table_number}
           </div>
 
@@ -322,18 +302,18 @@ export default function OrderTrackingClient({ orderToken }: Props) {
 
           {!isTerminal && (
             <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', flexWrap: 'wrap' }}>
-              <button type="button" onClick={beginEditingOrder} style={{ padding: '9px 16px', borderRadius: '999px', border: '1px solid rgba(255,255,255,0.16)', background: 'rgba(255,255,255,0.08)', color: '#F5F5F5', cursor: 'pointer', fontWeight: 700 }}>
+              <button type="button" onClick={beginEditingOrder} style={{ padding: '9px 16px', borderRadius: '999px', border: '1px solid rgba(23,23,23,0.1)', background: '#F4F4F5', color: '#262626', cursor: 'pointer', fontWeight: 700 }}>
                 Edit order
               </button>
-              <button type="button" onClick={() => void requestBill()} disabled={billRequested} style={{ padding: '9px 16px', borderRadius: '999px', border: '1px solid rgba(255,255,255,0.16)', background: billRequested ? 'rgba(34,197,94,0.12)' : 'rgba(255,255,255,0.08)', color: billRequested ? '#86EFAC' : '#F5F5F5', cursor: billRequested ? 'default' : 'pointer', fontWeight: 700 }}>
+              <button type="button" onClick={() => void requestBill()} disabled={billRequested} style={{ padding: '9px 16px', borderRadius: '999px', border: '1px solid rgba(23,23,23,0.1)', background: billRequested ? 'rgba(34,197,94,0.12)' : '#F4F4F5', color: billRequested ? '#15803D' : '#262626', cursor: billRequested ? 'default' : 'pointer', fontWeight: 700 }}>
                 {billRequested ? '✓ Bill requested' : 'Request bill'}
               </button>
               {!notificationsEnabled && typeof window !== 'undefined' && 'Notification' in window && (
-                <button type="button" onClick={() => void enableNotifications()} style={{ padding: '9px 16px', borderRadius: '999px', border: '1px solid rgba(255,255,255,0.16)', background: 'rgba(255,255,255,0.08)', color: '#F5F5F5', cursor: 'pointer', fontWeight: 700 }}>
+                <button type="button" onClick={() => void enableNotifications()} style={{ padding: '9px 16px', borderRadius: '999px', border: '1px solid rgba(23,23,23,0.1)', background: '#F4F4F5', color: '#262626', cursor: 'pointer', fontWeight: 700 }}>
                   🔔 Live alerts
                 </button>
               )}
-              {billError && <p style={{ color: '#FCA5A5', fontSize: '0.75rem', marginTop: '7px' }}>{billError}</p>}
+              {billError && <p style={{ color: '#B91C1C', fontSize: '0.75rem', marginTop: '7px' }}>{billError}</p>}
             </div>
           )}
 
@@ -358,7 +338,7 @@ export default function OrderTrackingClient({ orderToken }: Props) {
           {tableToken && (
             <Link
               href={`/t/${tableToken}/menu?order=${encodeURIComponent(orderToken)}`}
-              style={{ display: 'block', color: '#A3A3A3', fontSize: '0.8rem', marginTop: '14px', textDecoration: 'underline' }}
+              style={{ display: 'block', color: '#737373', fontSize: '0.8rem', marginTop: '14px', textDecoration: 'underline' }}
             >
               Add more items
             </Link>
@@ -371,10 +351,10 @@ export default function OrderTrackingClient({ orderToken }: Props) {
           <div className="customer-tracking-card" style={{ padding: '16px', background: '#FFFFFF', border: '1px solid rgba(23,23,23,0.06)', borderRadius: '16px' }}>
             <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: '12px', marginBottom: '12px' }}>
               <div>
-                <h2 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#F5F5F5' }}>Need anything?</h2>
+                <h2 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#171717' }}>Need anything?</h2>
                 <p style={{ fontSize: '0.76rem', color: '#737373', marginTop: '3px' }}>A staff member will be notified.</p>
               </div>
-              {serviceRequested && <span style={{ color: '#86EFAC', fontSize: '0.72rem', fontWeight: 700 }}>Request sent</span>}
+              {serviceRequested && <span style={{ color: '#15803D', fontSize: '0.72rem', fontWeight: 700 }}>Request sent</span>}
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '8px' }}>
               {SERVICE_REQUESTS.map(request => {
@@ -392,9 +372,9 @@ export default function OrderTrackingClient({ orderToken }: Props) {
                       gap: '8px',
                       padding: '11px 10px',
                       borderRadius: '10px',
-                      border: `1px solid ${isRequested ? 'rgba(34,197,94,0.3)' : 'rgba(255,255,255,0.08)'}`,
-                      background: isRequested ? 'rgba(34,197,94,0.1)' : 'rgba(255,255,255,0.04)',
-                      color: isRequested ? '#86EFAC' : '#D4D4D4',
+                      border: `1px solid ${isRequested ? 'rgba(34,197,94,0.3)' : 'rgba(23,23,23,0.1)'}`,
+                      background: isRequested ? 'rgba(34,197,94,0.1)' : '#F4F4F5',
+                      color: isRequested ? '#15803D' : '#525252',
                       fontSize: '0.78rem',
                       fontWeight: 700,
                       cursor: serviceRequestPending !== null || isRequested ? 'default' : 'pointer',
@@ -407,7 +387,7 @@ export default function OrderTrackingClient({ orderToken }: Props) {
                 )
               })}
             </div>
-            {serviceError && <p style={{ color: '#FCA5A5', fontSize: '0.75rem', marginTop: '9px' }}>{serviceError}</p>}
+            {serviceError && <p style={{ color: '#B91C1C', fontSize: '0.75rem', marginTop: '9px' }}>{serviceError}</p>}
           </div>
         </section>
       )}
@@ -436,8 +416,8 @@ export default function OrderTrackingClient({ orderToken }: Props) {
                         alignItems: 'center',
                         justifyContent: 'center',
                         fontSize: state === 'done' ? '0.9rem' : '1.1rem',
-                        border: `2px solid ${state === 'done' ? '#22C55E' : state === 'active' ? '#FF6B35' : 'rgba(255,255,255,0.08)'}`,
-                        background: state === 'done' ? 'rgba(34,197,94,0.12)' : state === 'active' ? 'rgba(255,107,53,0.12)' : 'rgba(255,255,255,0.03)',
+                        border: `2px solid ${state === 'done' ? '#22C55E' : state === 'active' ? '#FF6B35' : 'rgba(23,23,23,0.1)'}`,
+                        background: state === 'done' ? 'rgba(34,197,94,0.12)' : state === 'active' ? 'rgba(255,107,53,0.12)' : '#FFFFFF',
                         color: state === 'done' ? '#22C55E' : state === 'active' ? '#FF6B35' : '#525252',
                         boxShadow: state === 'active' ? '0 0 16px rgba(255,107,53,0.3)' : 'none',
                         animation: state === 'active' ? 'pulseGlow 2s ease-in-out infinite' : 'none',
@@ -451,7 +431,7 @@ export default function OrderTrackingClient({ orderToken }: Props) {
                           width: '2px',
                           flex: 1,
                           marginTop: '6px',
-                          background: state === 'done' ? '#22C55E' : 'rgba(255,255,255,0.06)',
+                          background: state === 'done' ? '#22C55E' : 'rgba(23,23,23,0.1)',
                           minHeight: '24px',
                           transition: 'background 0.5s ease',
                         }}
@@ -465,7 +445,7 @@ export default function OrderTrackingClient({ orderToken }: Props) {
                       className="customer-tracking-step-title"
                       style={{
                         fontWeight: state === 'pending' ? 400 : 600,
-                        color: state === 'pending' ? '#525252' : '#F5F5F5',
+                        color: state === 'pending' ? '#8A8A8F' : '#262626',
                         fontSize: '0.95rem',
                       }}
                     >
@@ -521,12 +501,12 @@ export default function OrderTrackingClient({ orderToken }: Props) {
                   <button
                     type="button"
                     onClick={() => setDraftQuantities(previous => ({ ...previous, [item.id]: Math.max(0, draftQuantity - 1) }))}
-                    style={{ width: '28px', height: '28px', borderRadius: '50%', border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.06)', color: draftQuantity === 0 ? '#FCA5A5' : '#D4D4D4', cursor: 'pointer', fontSize: '1rem' }}
+                    style={{ width: '28px', height: '28px', borderRadius: '50%', border: '1px solid rgba(23,23,23,0.1)', background: '#F4F4F5', color: draftQuantity === 0 ? '#B91C1C' : '#525252', cursor: 'pointer', fontSize: '1rem' }}
                     aria-label={`Decrease ${item.name}`}
                   >
                     {draftQuantity === 1 ? '🗑' : '−'}
                   </button>
-                  <span style={{ minWidth: '18px', textAlign: 'center', color: '#F5F5F5', fontWeight: 700 }}>{draftQuantity}</span>
+                  <span style={{ minWidth: '18px', textAlign: 'center', color: '#171717', fontWeight: 700 }}>{draftQuantity}</span>
                   <button
                     type="button"
                     onClick={() => setDraftQuantities(previous => ({ ...previous, [item.id]: Math.min(200, draftQuantity + 1) }))}
@@ -543,7 +523,7 @@ export default function OrderTrackingClient({ orderToken }: Props) {
                     fontWeight: 600,
                     padding: '3px 8px',
                     borderRadius: '999px',
-                    background: item.status === 'ready' ? 'rgba(34,197,94,0.12)' : item.status === 'preparing' ? 'rgba(255,107,53,0.12)' : 'rgba(255,255,255,0.06)',
+                    background: item.status === 'ready' ? 'rgba(34,197,94,0.12)' : item.status === 'preparing' ? 'rgba(255,107,53,0.12)' : '#F4F4F5',
                     color: item.status === 'ready' ? '#22C55E' : item.status === 'preparing' ? '#FF6B35' : '#737373',
                     textTransform: 'uppercase',
                     letterSpacing: '0.06em',
@@ -561,10 +541,10 @@ export default function OrderTrackingClient({ orderToken }: Props) {
         {isEditingOrder && (
           <div style={{ marginTop: '14px' }}>
             <div style={{ display: 'flex', gap: '8px' }}>
-              <button type="button" onClick={() => setIsEditingOrder(false)} disabled={isSavingEdit} style={{ flex: 1, padding: '12px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.04)', color: '#A3A3A3', cursor: 'pointer', fontWeight: 700 }}>Cancel</button>
+              <button type="button" onClick={() => setIsEditingOrder(false)} disabled={isSavingEdit} style={{ flex: 1, padding: '12px', borderRadius: '10px', border: '1px solid rgba(23,23,23,0.1)', background: '#F4F4F5', color: '#525252', cursor: 'pointer', fontWeight: 700 }}>Cancel</button>
               <button type="button" onClick={() => void saveOrderEdits()} disabled={isSavingEdit} style={{ flex: 1, padding: '12px', borderRadius: '10px', border: 'none', background: isSavingEdit ? 'rgba(255,107,53,0.5)' : '#FF6B35', color: 'white', cursor: isSavingEdit ? 'wait' : 'pointer', fontWeight: 800 }}>{isSavingEdit ? 'Saving…' : 'Save changes'}</button>
             </div>
-            {editError && <p style={{ color: '#FCA5A5', fontSize: '0.75rem', marginTop: '8px' }}>{editError}</p>}
+            {editError && <p style={{ color: '#B91C1C', fontSize: '0.75rem', marginTop: '8px' }}>{editError}</p>}
           </div>
         )}
       </div>
@@ -603,9 +583,9 @@ export default function OrderTrackingClient({ orderToken }: Props) {
               justifyContent: 'space-between',
               fontWeight: 700,
               fontSize: '1.05rem',
-              color: '#F5F5F5',
+              color: '#171717',
               paddingTop: order.tax > 0 || order.service_charge > 0 ? '12px' : 0,
-              borderTop: order.tax > 0 || order.service_charge > 0 ? '1px solid rgba(255,255,255,0.06)' : 'none',
+              borderTop: order.tax > 0 || order.service_charge > 0 ? '1px solid rgba(23,23,23,0.08)' : 'none',
             }}
           >
             <span>Total</span>
@@ -617,12 +597,12 @@ export default function OrderTrackingClient({ orderToken }: Props) {
       {isTerminal && !isCancelled && (
         <div style={{ padding: '0 20px 20px' }}>
           <div className="customer-tracking-card" style={{ padding: '16px', background: '#FFFFFF', border: '1px solid rgba(23,23,23,0.06)', borderRadius: '16px' }}>
-            <h2 style={{ fontSize: '0.82rem', fontWeight: 700, color: '#A3A3A3', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '12px' }}>How was your visit?</h2>
-            {feedbackSubmitted ? <p style={{ color: '#86EFAC', fontSize: '0.85rem' }}>Thanks for helping the restaurant improve.</p> : <>
-              <div style={{ display: 'flex', gap: '6px', marginBottom: '10px' }}>{[1, 2, 3, 4, 5].map(value => <button type="button" key={value} onClick={() => setFeedbackRating(value)} aria-label={`${value} stars`} style={{ border: 'none', background: 'transparent', color: value <= feedbackRating ? '#F59E0B' : '#525252', fontSize: '1.5rem', cursor: 'pointer' }}>★</button>)}</div>
-              <textarea value={feedbackComment} onChange={event => setFeedbackComment(event.target.value)} placeholder="Tell us what went well or what we can improve" rows={2} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)', color: '#F5F5F5', resize: 'vertical' }} />
-              <button type="button" onClick={() => void submitFeedback()} disabled={!feedbackRating} style={{ marginTop: '10px', padding: '9px 14px', borderRadius: '8px', border: 'none', background: feedbackRating ? '#FF6B35' : 'rgba(255,255,255,0.08)', color: 'white', fontWeight: 700, cursor: feedbackRating ? 'pointer' : 'default' }}>Submit feedback</button>
-              {feedbackError && <p style={{ color: '#FCA5A5', fontSize: '0.75rem', marginTop: '7px' }}>{feedbackError}</p>}
+            <h2 style={{ fontSize: '0.82rem', fontWeight: 700, color: '#737373', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '12px' }}>How was your visit?</h2>
+            {feedbackSubmitted ? <p style={{ color: '#15803D', fontSize: '0.85rem' }}>Thanks for helping the restaurant improve.</p> : <>
+              <div style={{ display: 'flex', gap: '6px', marginBottom: '10px' }}>{[1, 2, 3, 4, 5].map(value => <button type="button" key={value} onClick={() => setFeedbackRating(value)} aria-label={`${value} stars`} style={{ border: 'none', background: 'transparent', color: value <= feedbackRating ? '#F59E0B' : '#D4D4D8', fontSize: '1.5rem', cursor: 'pointer' }}>★</button>)}</div>
+              <textarea value={feedbackComment} onChange={event => setFeedbackComment(event.target.value)} placeholder="Tell us what went well or what we can improve" rows={2} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid rgba(23,23,23,0.12)', background: '#F7F7F8', color: '#171717', resize: 'vertical' }} />
+              <button type="button" onClick={() => void submitFeedback()} disabled={!feedbackRating} style={{ marginTop: '10px', padding: '9px 14px', borderRadius: '8px', border: 'none', background: feedbackRating ? '#FF6B35' : '#E5E5E7', color: feedbackRating ? 'white' : '#8A8A8F', fontWeight: 700, cursor: feedbackRating ? 'pointer' : 'default' }}>Submit feedback</button>
+              {feedbackError && <p style={{ color: '#B91C1C', fontSize: '0.75rem', marginTop: '7px' }}>{feedbackError}</p>}
             </>}
           </div>
         </div>
@@ -643,13 +623,13 @@ export default function OrderTrackingClient({ orderToken }: Props) {
                   gap: '12px',
                   alignItems: 'center',
                   padding: '10px 0',
-                  borderBottom: idx < order.events.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
+                  borderBottom: idx < order.events.length - 1 ? '1px solid rgba(23,23,23,0.06)' : 'none',
                 }}
               >
                 <span style={{ fontSize: '0.75rem', color: '#525252', flexShrink: 0, minWidth: '70px' }}>
                   {format(new Date(event.created_at), 'h:mm a')}
                 </span>
-                <span style={{ fontSize: '0.85rem', color: '#A3A3A3', textTransform: 'capitalize' }}>
+                <span style={{ fontSize: '0.85rem', color: '#737373', textTransform: 'capitalize' }}>
                   {event.event_type.replace(/_/g, ' ')}
                 </span>
               </div>
