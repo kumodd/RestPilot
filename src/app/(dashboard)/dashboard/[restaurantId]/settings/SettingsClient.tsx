@@ -48,6 +48,7 @@ type Tab = 'general' | 'workflow' | 'charges' | 'notifications'
 function ToggleRow({ label, description, checked, onChange }: { label: string; description?: string; checked: boolean; onChange: (v: boolean) => void }) {
   return (
     <div
+      className="settings-toggle-row"
       style={{
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         padding: '14px 0', borderBottom: '1px solid rgba(255,255,255,0.05)',
@@ -409,20 +410,26 @@ export default function SettingsClient({ restaurant, settings, restaurantId }: P
 
         {/* NOTIFICATIONS */}
         {activeTab === 'notifications' && (
-          <div>
-            <p style={{ fontSize: '0.82rem', color: '#737373', marginBottom: '16px' }}>
-              Sound alerts for incoming orders and status changes.
-            </p>
-            <ToggleRow
-              label="Waiter Sound Notifications"
-              description="Play a sound when a new order is placed and needs waiter attention."
-              checked={waiterSound} onChange={setWaiterSound}
-            />
-            <ToggleRow
-              label="Kitchen Sound Notifications"
-              description="Play a sound when a confirmed order arrives at the kitchen screen."
-              checked={kitchenSound} onChange={setKitchenSound}
-            />
+          <div className="notification-settings-panel">
+            <div className="notification-settings-intro">
+              <div className="notification-settings-intro-icon">🔔</div>
+              <div>
+                <h3>Keep the team in sync</h3>
+                <p>Sound alerts help front-of-house and kitchen teams react quickly while the notification center keeps a written activity trail.</p>
+              </div>
+            </div>
+            <div className="notification-settings-list">
+              <ToggleRow
+                label="Waiter sound alerts"
+                description="Play a sound when a new order or customer service request needs waiter attention."
+                checked={waiterSound} onChange={setWaiterSound}
+              />
+              <ToggleRow
+                label="Kitchen sound alerts"
+                description="Play a sound when a confirmed order arrives at the kitchen screen."
+                checked={kitchenSound} onChange={setKitchenSound}
+              />
+            </div>
           </div>
         )}
       </div>

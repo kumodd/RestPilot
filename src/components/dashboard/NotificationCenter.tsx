@@ -1,7 +1,20 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import {
+  Bell,
+  CheckCheck,
+  ChefHat,
+  CircleAlert,
+  ClipboardList,
+  ExternalLink,
+  Inbox,
+  Info,
+  ReceiptText,
+  X,
+} from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 interface NotificationRow {
@@ -14,32 +27,66 @@ interface NotificationRow {
   created_at: string
 }
 
+type NotificationTone = 'orange' | 'blue' | 'green' | 'red' | 'purple' | 'neutral'
+
+const NOTIFICATION_META: Record<string, { icon: LucideIcon; tone: NotificationTone }> = {
+  new_order: { icon: ClipboardList, tone: 'orange' },
+  order_reviewing: { icon: Info, tone: 'blue' },
+  order_confirmed: { icon: ChefHat, tone: 'purple' },
+  order_preparing: { icon: ChefHat, tone: 'orange' },
+  order_ready: { icon: Bell, tone: 'green' },
+  order_served: { icon: ReceiptText, tone: 'blue' },
+  order_completed: { icon: CheckCheck, tone: 'green' },
+  order_cancelled: { icon: CircleAlert, tone: 'red' },
+  order_item_added: { icon: ClipboardList, tone: 'orange' },
+  order_item_modified: { icon: Info, tone: 'blue' },
+  order_item_removed: { icon: CircleAlert, tone: 'red' },
+  payment_received: { icon: ReceiptText, tone: 'green' },
+  bill_requested: { icon: ReceiptText, tone: 'purple' },
+  service_request: { icon: Bell, tone: 'orange' },
+}
+
 function relativeTime(value: string) {
   const seconds = Math.max(1, Math.floor((Date.now() - new Date(value).getTime()) / 1000))
-  if (seconds < 60) return `${seconds}s ago`
+  if (seconds < 60) return 'Just now'
   if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`
   if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`
-  return `${Math.floor(seconds / 86400)}d ago`
+  if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`
+  return new Date(value).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
+}
+
+function getNotificationMeta(type: string) {
+  return NOTIFICATION_META[type] ?? { icon: Inbox, tone: 'neutral' as const }
 }
 
 export default function NotificationCenter({ userId }: { userId: string }) {
   const [supabase] = useState(() => createClient())
   const router = useRouter()
+  const anchorRef = useRef<HTMLDivElement>(null)
   const [notifications, setNotifications] = useState<NotificationRow[]>([])
   const [isOpen, setIsOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [isMarkingAllRead, setIsMarkingAllRead] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const loadNotifications = useCallback(async () => {
     setIsLoading(true)
+    setError(null)
+
     // action_url is added by migration 019; the cast keeps older generated
     // client types usable until Supabase types are regenerated.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data } = await (supabase.from('notifications') as any)
+    const { data, error: queryError } = await (supabase.from('notifications') as any)
       .select('id, title, body, notification_type, is_read, action_url, created_at')
       .eq('recipient_id', userId)
       .order('created_at', { ascending: false })
       .limit(30)
-    setNotifications((data as NotificationRow[]) ?? [])
+
+    if (queryError) {
+      setError('We couldn\'t load notifications.')
+    } else {
+      setNotifications((data as NotificationRow[]) ?? [])
+    }
     setIsLoading(false)
   }, [supabase, userId])
 
@@ -57,10 +104,32 @@ export default function NotificationCenter({ userId }: { userId: string }) {
     return () => { void supabase.removeChannel(channel) }
   }, [loadNotifications, supabase, userId])
 
+  useEffect(() => {
+    if (!isOpen) return
+
+    const handlePointerDown = (event: MouseEvent) => {
+      if (!anchorRef.current?.contains(event.target as Node)) setIsOpen(false)
+    }
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsOpen(false)
+    }
+
+    document.addEventListener('mousedown', handlePointerDown)
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [isOpen])
+
   const markRead = async (notification: NotificationRow) => {
     if (!notification.is_read) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (supabase.rpc as any)('mark_notification_read', { p_notification_id: notification.id })
+      const { error: rpcError } = await (supabase.rpc as any)('mark_notification_read', { p_notification_id: notification.id })
+      if (rpcError) {
+        setError('We couldn\'t update that notification.')
+        return
+      }
       setNotifications(current => current.map(item => item.id === notification.id ? { ...item, is_read: true } : item))
     }
     if (notification.action_url) {
@@ -69,66 +138,141 @@ export default function NotificationCenter({ userId }: { userId: string }) {
     }
   }
 
-  const unreadCount = notifications.filter(notification => !notification.is_read).length
+  const markAllRead = async () => {
+    const unread = notifications.filter(notification => !notification.is_read)
+    if (unread.length === 0) return
 
-  return (
-    <div style={{ position: 'relative', padding: '0 16px 16px' }}>
+    setIsMarkingAllRead(true)
+    setError(null)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const results = await Promise.all(unread.map(notification => (supabase.rpc as any)('mark_notification_read', { p_notification_id: notification.id })))
+    const failed = results.some(result => result.error)
+    if (failed) {
+      setError('Some notifications could not be marked as read. Try again.')
+    } else {
+      setNotifications(current => current.map(notification => ({ ...notification, is_read: true })))
+    }
+    setIsMarkingAllRead(false)
+  }
+
+  const unread = notifications.filter(notification => !notification.is_read)
+  const read = notifications.filter(notification => notification.is_read)
+  const unreadCount = unread.length
+
+  const renderNotification = (notification: NotificationRow) => {
+    const { icon: Icon, tone } = getNotificationMeta(notification.notification_type)
+    return (
       <button
         type="button"
+        key={notification.id}
+        className={`notification-item ${notification.is_read ? 'is-read' : 'is-unread'}`}
+        onClick={() => void markRead(notification)}
+        aria-label={`${notification.title}${notification.action_url ? ', open details' : ''}`}
+      >
+        <span className={`notification-item-icon notification-tone-${tone}`}>
+          <Icon size={16} strokeWidth={2.2} />
+        </span>
+        <span className="notification-item-copy">
+          <span className="notification-item-title-row">
+            <span className="notification-item-title">{notification.title}</span>
+            {!notification.is_read && <span className="notification-unread-dot" aria-label="Unread" />}
+          </span>
+          {notification.body && <span className="notification-item-body">{notification.body}</span>}
+          <span className="notification-item-meta">
+            {relativeTime(notification.created_at)}
+            {notification.action_url && <><span aria-hidden="true">·</span><span>View details</span><ExternalLink size={11} /></>}
+          </span>
+        </span>
+      </button>
+    )
+  }
+
+  return (
+    <div className="notification-anchor" ref={anchorRef}>
+      <button
+        type="button"
+        className={`notification-toggle ${unreadCount > 0 ? 'has-unread' : ''}`}
         onClick={() => setIsOpen(value => !value)}
         aria-label={`Notifications${unreadCount ? ` (${unreadCount} unread)` : ''}`}
-        style={{
-          width: '100%', display: 'flex', alignItems: 'center', gap: '10px',
-          padding: '10px 12px', borderRadius: '9px', cursor: 'pointer',
-          color: '#D4D4D8', background: 'rgba(255,255,255,0.04)',
-          border: '1px solid rgba(255,255,255,0.07)', textAlign: 'left',
-        }}
+        aria-expanded={isOpen}
+        aria-haspopup="dialog"
       >
-        <span style={{ fontSize: '1rem' }}>🔔</span>
-        <span style={{ flex: 1, fontSize: '0.82rem', fontWeight: 600 }}>Notifications</span>
-        {unreadCount > 0 && (
-          <span style={{ minWidth: '21px', padding: '2px 6px', borderRadius: '999px', background: '#EF4444', color: 'white', fontSize: '0.68rem', fontWeight: 800, textAlign: 'center' }}>
-            {unreadCount > 99 ? '99+' : unreadCount}
-          </span>
-        )}
+        <span className="notification-toggle-icon"><Bell size={17} strokeWidth={2.2} /></span>
+        <span className="notification-toggle-label">Notifications</span>
+        {unreadCount > 0 && <span className="notification-badge">{unreadCount > 99 ? '99+' : unreadCount}</span>}
+        <span className="notification-toggle-status">{unreadCount > 0 ? 'Needs attention' : 'All caught up'}</span>
       </button>
 
       {isOpen && (
-        <div style={{
-          position: 'absolute', zIndex: 30, left: '16px', top: '48px', width: 'min(360px, calc(100vw - 32px))',
-          maxHeight: '420px', overflow: 'auto', background: '#1A1A2E',
-          border: '1px solid rgba(255,255,255,0.12)', borderRadius: '12px',
-          boxShadow: '0 18px 50px rgba(0,0,0,0.35)',
-        }}>
-          <div style={{ padding: '14px 16px', borderBottom: '1px solid rgba(255,255,255,0.07)', fontWeight: 700, color: '#F5F5F5' }}>
-            Notifications
-          </div>
-          {isLoading ? (
-            <div style={{ padding: '24px', color: '#737373', fontSize: '0.82rem' }}>Loading…</div>
-          ) : notifications.length === 0 ? (
-            <div style={{ padding: '24px', color: '#737373', fontSize: '0.82rem' }}>You are all caught up.</div>
-          ) : notifications.map(notification => (
-            <button
-              type="button"
-              key={notification.id}
-              onClick={() => void markRead(notification)}
-              style={{
-                width: '100%', padding: '13px 16px', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.05)',
-                background: notification.is_read ? 'transparent' : 'rgba(255,107,53,0.08)',
-                color: '#F5F5F5', textAlign: 'left', cursor: notification.action_url ? 'pointer' : 'default',
-              }}
-            >
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
-                <span style={{ fontSize: '0.75rem', color: notification.is_read ? '#525252' : '#FF6B35' }}>●</span>
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ fontSize: '0.82rem', fontWeight: notification.is_read ? 600 : 800 }}>{notification.title}</div>
-                  {notification.body && <div style={{ marginTop: '3px', fontSize: '0.75rem', color: '#A1A1AA', lineHeight: 1.4 }}>{notification.body}</div>}
-                  <div style={{ marginTop: '5px', fontSize: '0.68rem', color: '#525252' }}>{relativeTime(notification.created_at)}</div>
+        <>
+          <button type="button" className="notification-backdrop" onClick={() => setIsOpen(false)} aria-label="Close notifications" />
+          <section className="notification-popover" role="dialog" aria-label="Notifications" aria-modal="false">
+            <header className="notification-popover-header">
+              <div>
+                <div className="notification-popover-title-row">
+                  <h2>Notifications</h2>
+                  {unreadCount > 0 && <span className="notification-header-count">{unreadCount} new</span>}
                 </div>
+                <p>{unreadCount > 0 ? 'Stay on top of live restaurant activity.' : 'You are all caught up.'}</p>
               </div>
-            </button>
-          ))}
-        </div>
+              <div className="notification-popover-actions">
+                {unreadCount > 0 && (
+                  <button
+                    type="button"
+                    className="notification-action-button"
+                    onClick={() => void markAllRead()}
+                    disabled={isMarkingAllRead}
+                  >
+                    <CheckCheck size={14} />
+                    {isMarkingAllRead ? 'Updating…' : 'Mark all read'}
+                  </button>
+                )}
+                <button type="button" className="notification-close-button" onClick={() => setIsOpen(false)} aria-label="Close notifications">
+                  <X size={17} />
+                </button>
+              </div>
+            </header>
+
+            {error && (
+              <div className="notification-error" role="alert">
+                <span>{error}</span>
+                <button type="button" onClick={() => void loadNotifications()}>Retry</button>
+              </div>
+            )}
+
+            {isLoading ? (
+              <div className="notification-state">
+                <span className="notification-spinner" />
+                <span>Loading notifications…</span>
+              </div>
+            ) : notifications.length === 0 ? (
+              <div className="notification-state notification-empty-state">
+                <span className="notification-empty-icon"><Inbox size={22} /></span>
+                <strong>No notifications yet</strong>
+                <span>New orders and service requests will appear here.</span>
+              </div>
+            ) : (
+              <div className="notification-list">
+                {unread.length > 0 && (
+                  <div className="notification-section">
+                    <div className="notification-section-heading">New</div>
+                    {unread.map(renderNotification)}
+                  </div>
+                )}
+                {read.length > 0 && (
+                  <div className="notification-section">
+                    <div className="notification-section-heading">Earlier</div>
+                    {read.map(renderNotification)}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {!isLoading && notifications.length > 0 && (
+              <footer className="notification-popover-footer">Showing your latest {notifications.length} notification{notifications.length === 1 ? '' : 's'}</footer>
+            )}
+          </section>
+        </>
       )}
     </div>
   )
