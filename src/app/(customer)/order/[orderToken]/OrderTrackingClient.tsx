@@ -1,12 +1,22 @@
 'use client'
 
+import Link from 'next/link'
 import { useOrderTracking } from '@/lib/hooks/useOrderTracking'
 import { formatPrice } from '@/lib/utils/price'
 import { createClient } from '@/lib/supabase/client'
 import { ORDER_STATUS_CONFIG } from '@/lib/types/app.types'
 import type { OrderStatus } from '@/lib/types/database.types'
 import { format } from 'date-fns'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+
+type ServiceRequestType = 'waiter' | 'water' | 'cutlery' | 'cleaning'
+
+const SERVICE_REQUESTS: Array<{ type: ServiceRequestType; label: string; icon: string }> = [
+  { type: 'waiter', label: 'Call waiter', icon: '🙋' },
+  { type: 'water', label: 'Water', icon: '💧' },
+  { type: 'cutlery', label: 'Cutlery', icon: '🍴' },
+  { type: 'cleaning', label: 'Clean table', icon: '✨' },
+]
 
 const TIMELINE_STEPS: Array<{
   status: OrderStatus[]
@@ -51,6 +61,46 @@ export default function OrderTrackingClient({ orderToken }: Props) {
   const [feedbackComment, setFeedbackComment] = useState('')
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false)
   const [feedbackError, setFeedbackError] = useState<string | null>(null)
+  const [serviceRequestPending, setServiceRequestPending] = useState<ServiceRequestType | null>(null)
+  const [serviceRequested, setServiceRequested] = useState<ServiceRequestType | null>(null)
+  const [serviceError, setServiceError] = useState<string | null>(null)
+  const [tableToken, setTableToken] = useState<string | null>(null)
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false)
+  const previousStatusRef = useRef<OrderStatus | null>(null)
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const timer = window.setTimeout(() => {
+      try {
+        setTableToken(window.localStorage.getItem('restpilot_last_table_token'))
+      } catch {}
+
+      if ('Notification' in window) {
+        setNotificationsEnabled(window.Notification.permission === 'granted')
+      }
+    }, 0)
+
+    return () => window.clearTimeout(timer)
+  }, [])
+
+  useEffect(() => {
+    if (!order) return
+
+    const previousStatus = previousStatusRef.current
+    if (
+      previousStatus &&
+      previousStatus !== order.status &&
+      typeof window !== 'undefined' &&
+      'Notification' in window &&
+      window.Notification.permission === 'granted'
+    ) {
+      new window.Notification('Order update', {
+        body: ORDER_STATUS_CONFIG[order.status].description,
+        tag: `restpilot-order-${orderToken}`,
+      })
+    }
+    previousStatusRef.current = order.status
+  }, [order, orderToken])
 
   const requestBill = async () => {
     setBillError(null)
@@ -61,6 +111,31 @@ export default function OrderTrackingClient({ orderToken }: Props) {
       return
     }
     setBillRequested(true)
+  }
+
+  const requestService = async (requestType: ServiceRequestType) => {
+    setServiceError(null)
+    setServiceRequestPending(requestType)
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error: rpcError } = await (supabase.rpc as any)('create_customer_service_request', {
+      p_order_token: orderToken,
+      p_request_type: requestType,
+      p_message: null,
+    })
+
+    if (rpcError || data?.error) {
+      setServiceError(rpcError?.message ?? data?.error ?? 'Unable to send your request')
+    } else {
+      setServiceRequested(requestType)
+    }
+    setServiceRequestPending(null)
+  }
+
+  const enableNotifications = async () => {
+    if (typeof window === 'undefined' || !('Notification' in window)) return
+    const permission = await window.Notification.requestPermission()
+    setNotificationsEnabled(permission === 'granted')
   }
 
   const submitFeedback = async () => {
@@ -202,11 +277,22 @@ export default function OrderTrackingClient({ orderToken }: Props) {
             Table {order.table_number}
           </div>
 
+          {order.placed_at && (
+            <div style={{ fontSize: '0.75rem', color: '#737373', marginBottom: '16px' }}>
+              Placed {format(new Date(order.placed_at), 'h:mm a')}
+            </div>
+          )}
+
           {!isTerminal && (
-            <div>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', flexWrap: 'wrap' }}>
               <button type="button" onClick={() => void requestBill()} disabled={billRequested} style={{ padding: '9px 16px', borderRadius: '999px', border: '1px solid rgba(255,255,255,0.16)', background: billRequested ? 'rgba(34,197,94,0.12)' : 'rgba(255,255,255,0.08)', color: billRequested ? '#86EFAC' : '#F5F5F5', cursor: billRequested ? 'default' : 'pointer', fontWeight: 700 }}>
                 {billRequested ? '✓ Bill requested' : 'Request bill'}
               </button>
+              {!notificationsEnabled && typeof window !== 'undefined' && 'Notification' in window && (
+                <button type="button" onClick={() => void enableNotifications()} style={{ padding: '9px 16px', borderRadius: '999px', border: '1px solid rgba(255,255,255,0.16)', background: 'rgba(255,255,255,0.08)', color: '#F5F5F5', cursor: 'pointer', fontWeight: 700 }}>
+                  🔔 Live alerts
+                </button>
+              )}
               {billError && <p style={{ color: '#FCA5A5', fontSize: '0.75rem', marginTop: '7px' }}>{billError}</p>}
             </div>
           )}
@@ -228,8 +314,63 @@ export default function OrderTrackingClient({ orderToken }: Props) {
           >
             {isCancelled ? '❌' : statusConfig.step >= 5 ? '✓' : '●'} {statusConfig.label}
           </div>
+
+          {tableToken && (
+            <Link
+              href={`/t/${tableToken}/menu`}
+              style={{ display: 'block', color: '#A3A3A3', fontSize: '0.8rem', marginTop: '14px', textDecoration: 'underline' }}
+            >
+              Add more items
+            </Link>
+          )}
         </div>
       </div>
+
+      {!isCancelled && !isTerminal && (
+        <section style={{ padding: '20px 20px 0' }}>
+          <div style={{ padding: '16px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: '12px', marginBottom: '12px' }}>
+              <div>
+                <h2 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#F5F5F5' }}>Need anything?</h2>
+                <p style={{ fontSize: '0.76rem', color: '#737373', marginTop: '3px' }}>A staff member will be notified.</p>
+              </div>
+              {serviceRequested && <span style={{ color: '#86EFAC', fontSize: '0.72rem', fontWeight: 700 }}>Request sent</span>}
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '8px' }}>
+              {SERVICE_REQUESTS.map(request => {
+                const isPending = serviceRequestPending === request.type
+                const isRequested = serviceRequested === request.type
+                return (
+                  <button
+                    type="button"
+                    key={request.type}
+                    onClick={() => void requestService(request.type)}
+                    disabled={serviceRequestPending !== null || isRequested}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '11px 10px',
+                      borderRadius: '10px',
+                      border: `1px solid ${isRequested ? 'rgba(34,197,94,0.3)' : 'rgba(255,255,255,0.08)'}`,
+                      background: isRequested ? 'rgba(34,197,94,0.1)' : 'rgba(255,255,255,0.04)',
+                      color: isRequested ? '#86EFAC' : '#D4D4D4',
+                      fontSize: '0.78rem',
+                      fontWeight: 700,
+                      cursor: serviceRequestPending !== null || isRequested ? 'default' : 'pointer',
+                      opacity: serviceRequestPending !== null && !isPending ? 0.55 : 1,
+                    }}
+                  >
+                    <span>{isPending ? '⏳' : isRequested ? '✓' : request.icon}</span>
+                    {isRequested ? 'Requested' : request.label}
+                  </button>
+                )
+              })}
+            </div>
+            {serviceError && <p style={{ color: '#FCA5A5', fontSize: '0.75rem', marginTop: '9px' }}>{serviceError}</p>}
+          </div>
+        </section>
+      )}
 
       {/* Timeline */}
       {!isCancelled && (
@@ -362,7 +503,7 @@ export default function OrderTrackingClient({ orderToken }: Props) {
             padding: '16px',
           }}
         >
-          {order.tax > 0 && (
+          {order.subtotal > 0 && (
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: '#737373', marginBottom: '8px' }}>
               <span>Subtotal</span>
               <span>{formatPrice(order.subtotal, order.currency_symbol)}</span>
@@ -387,8 +528,8 @@ export default function OrderTrackingClient({ orderToken }: Props) {
               fontWeight: 700,
               fontSize: '1.05rem',
               color: '#F5F5F5',
-              paddingTop: order.tax > 0 ? '12px' : 0,
-              borderTop: order.tax > 0 ? '1px solid rgba(255,255,255,0.06)' : 'none',
+              paddingTop: order.tax > 0 || order.service_charge > 0 ? '12px' : 0,
+              borderTop: order.tax > 0 || order.service_charge > 0 ? '1px solid rgba(255,255,255,0.06)' : 'none',
             }}
           >
             <span>Total</span>

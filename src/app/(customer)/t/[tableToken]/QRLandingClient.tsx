@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
@@ -12,41 +12,55 @@ interface Props {
   tableToken: string
 }
 
+interface ActiveOrder {
+  order_token: string
+  order_number: number
+  status: string
+}
+
 export default function QRLandingClient({ resolution, tableToken }: Props) {
   const { restaurant, branch, table } = resolution
   const [isLoading, setIsLoading] = useState(false)
 
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
   const { customerData } = useCustomerStorage(restaurant.id)
-  const [activeOrders, setActiveOrders] = useState<any[]>([])
+  const [activeOrders, setActiveOrders] = useState<ActiveOrder[]>([])
   const [isCheckingOrders, setIsCheckingOrders] = useState(false)
   const [manualPhone, setManualPhone] = useState('')
   const [showManualCheck, setShowManualCheck] = useState(false)
 
-  useEffect(() => {
-    if (customerData?.phone) {
-      checkOrders(customerData.phone)
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [customerData?.phone])
-
-  const checkOrders = async (phoneToUse: string) => {
+  const checkOrders = useCallback(async (phoneToUse: string) => {
     if (!phoneToUse.trim()) return
     setIsCheckingOrders(true)
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await (supabase.rpc as any)('get_active_orders_by_phone', {
         p_restaurant_id: restaurant.id,
         p_phone: phoneToUse.trim(),
       })
       if (!error && data) {
-        setActiveOrders(data as any[])
+        setActiveOrders(data as ActiveOrder[])
       }
     } catch (err) {
       console.error(err)
     } finally {
       setIsCheckingOrders(false)
     }
-  }
+  }, [restaurant.id, supabase])
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('restpilot_last_table_token', tableToken)
+    } catch {}
+  }, [tableToken])
+
+  useEffect(() => {
+    if (!customerData?.phone) return
+    const timer = window.setTimeout(() => {
+      void checkOrders(customerData.phone)
+    }, 0)
+    return () => window.clearTimeout(timer)
+  }, [customerData?.phone, checkOrders])
 
   // Apply restaurant branding via CSS variables
   const brandStyle = {
@@ -176,44 +190,49 @@ export default function QRLandingClient({ resolution, tableToken }: Props) {
 
         {/* Primary CTA */}
         {restaurant.is_accepting_orders ? (
-          <Link
-            href={`/t/${tableToken}/menu`}
-            onClick={() => setIsLoading(true)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '10px',
-              width: '100%',
-              padding: '18px 28px',
-              background: `linear-gradient(135deg, ${restaurant.primary_color ?? '#FF6B35'}, ${restaurant.primary_color ?? '#FF6B35'}CC)`,
-              color: 'white',
-              borderRadius: '16px',
-              fontSize: '1.1rem',
-              fontWeight: 800,
-              textDecoration: 'none',
-              boxShadow: `0 8px 32px ${restaurant.primary_color ?? '#FF6B35'}50`,
-              letterSpacing: '-0.01em',
-            }}
-          >
-            {isLoading ? (
-              <div
-                style={{
-                  width: '20px',
-                  height: '20px',
-                  border: '2px solid rgba(255,255,255,0.4)',
-                  borderTopColor: 'white',
-                  borderRadius: '50%',
-                  animation: 'spin 0.7s linear infinite',
-                }}
-              />
-            ) : (
-              <>
-                <span style={{ fontSize: '1.3rem' }}>🍽️</span>
-                View Menu
-              </>
-            )}
-          </Link>
+          <>
+            <Link
+              href={`/t/${tableToken}/menu`}
+              onClick={() => setIsLoading(true)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '10px',
+                width: '100%',
+                padding: '18px 28px',
+                background: `linear-gradient(135deg, ${restaurant.primary_color ?? '#FF6B35'}, ${restaurant.primary_color ?? '#FF6B35'}CC)`,
+                color: 'white',
+                borderRadius: '16px',
+                fontSize: '1.1rem',
+                fontWeight: 800,
+                textDecoration: 'none',
+                boxShadow: `0 8px 32px ${restaurant.primary_color ?? '#FF6B35'}50`,
+                letterSpacing: '-0.01em',
+              }}
+            >
+              {isLoading ? (
+                <div
+                  style={{
+                    width: '20px',
+                    height: '20px',
+                    border: '2px solid rgba(255,255,255,0.4)',
+                    borderTopColor: 'white',
+                    borderRadius: '50%',
+                    animation: 'spin 0.7s linear infinite',
+                  }}
+                />
+              ) : (
+                <>
+                  <span style={{ fontSize: '1.3rem' }}>🍽️</span>
+                  View Menu
+                </>
+              )}
+            </Link>
+            <p style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.45)', marginTop: '12px' }}>
+              No app or account required · order from your table
+            </p>
+          </>
         ) : (
           <div
             style={{
@@ -229,6 +248,36 @@ export default function QRLandingClient({ resolution, tableToken }: Props) {
             <p style={{ fontSize: '0.85rem', opacity: 0.7 }}>
               We&apos;re currently not taking new orders. Please ask our staff for assistance.
             </p>
+          </div>
+        )}
+
+        {restaurant.is_accepting_orders && (
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, 1fr)',
+              gap: '8px',
+              marginTop: '24px',
+            }}
+          >
+            {[
+              ['🍽️', 'Browse menu'],
+              ['🔔', 'Live updates'],
+              ['🙋', 'Call waiter'],
+            ].map(([icon, label]) => (
+              <div
+                key={label}
+                style={{
+                  padding: '12px 6px',
+                  borderRadius: '12px',
+                  background: 'rgba(255,255,255,0.04)',
+                  border: '1px solid rgba(255,255,255,0.07)',
+                }}
+              >
+                <div style={{ fontSize: '1.05rem', marginBottom: '5px' }}>{icon}</div>
+                <div style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.58)', lineHeight: 1.2 }}>{label}</div>
+              </div>
+            ))}
           </div>
         )}
 

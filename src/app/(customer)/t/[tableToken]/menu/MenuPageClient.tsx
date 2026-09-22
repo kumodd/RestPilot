@@ -65,6 +65,8 @@ export default function MenuPageClient({ resolution, categories, settings, table
   const [cartOpen, setCartOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [searchOpen, setSearchOpen] = useState(false)
+  const [dietaryFilter, setDietaryFilter] = useState('all')
+  const [popularOnly, setPopularOnly] = useState(false)
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({})
 
   const brandStyle = {
@@ -88,14 +90,27 @@ export default function MenuPageClient({ resolution, categories, settings, table
   const filteredCategories = categories.map(cat => ({
     ...cat,
     menu_items: cat.menu_items.filter(item => {
-      if (!searchQuery) return item.is_available
+      if (!item.is_available) return false
+      if (dietaryFilter !== 'all' && item.dietary_type !== dietaryFilter) return false
+      if (popularOnly && !item.is_popular && !item.is_recommended) return false
+      if (!searchQuery) return true
       return (
-        item.is_available &&
-        (item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          item.description?.toLowerCase().includes(searchQuery.toLowerCase()))
+        item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        cat.name.toLowerCase().includes(searchQuery.toLowerCase())
       )
     }),
   })).filter(cat => cat.menu_items.length > 0)
+
+  const spotlightItems = categories
+    .flatMap(category => category.menu_items)
+    .filter(item => item.is_available && (item.is_popular || item.is_recommended))
+    .slice(0, 6)
+
+  const availableItemCount = categories.reduce(
+    (count, category) => count + category.menu_items.filter(item => item.is_available).length,
+    0,
+  )
 
   const dietaryIcon = (type: string | null) => {
     if (type === 'veg' || type === 'vegan') return '🟢'
@@ -233,6 +248,122 @@ export default function MenuPageClient({ resolution, categories, settings, table
 
       {/* Menu Content */}
       <main style={{ padding: '0 0 120px', background: '#0F0F1A' }}>
+        <section style={{ padding: '18px 16px 4px' }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '12px',
+              marginBottom: '12px',
+            }}
+          >
+            <div>
+              <p style={{ color: '#A3A3A3', fontSize: '0.76rem', marginBottom: '4px' }}>Ordering from</p>
+              <h1 style={{ color: '#F5F5F5', fontSize: '1.15rem', fontWeight: 800 }}>
+                {table.display_name ?? `Table ${table.table_number}`}
+              </h1>
+            </div>
+            <span
+              style={{
+                color: restaurant.is_accepting_orders ? '#86EFAC' : '#FCA5A5',
+                background: restaurant.is_accepting_orders ? 'rgba(34,197,94,0.12)' : 'rgba(239,68,68,0.12)',
+                border: `1px solid ${restaurant.is_accepting_orders ? 'rgba(34,197,94,0.22)' : 'rgba(239,68,68,0.22)'}`,
+                borderRadius: '999px',
+                padding: '6px 10px',
+                fontSize: '0.7rem',
+                fontWeight: 700,
+              }}
+            >
+              {restaurant.is_accepting_orders ? '● Taking orders' : '● Orders paused'}
+            </span>
+          </div>
+
+          <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', scrollbarWidth: 'none', paddingBottom: '4px' }}>
+            <button
+              type="button"
+              onClick={() => setPopularOnly(value => !value)}
+              style={{
+                flexShrink: 0,
+                padding: '8px 12px',
+                borderRadius: '999px',
+                border: `1px solid ${popularOnly ? restaurant.primary_color ?? '#FF6B35' : 'rgba(255,255,255,0.12)'}`,
+                background: popularOnly ? `${restaurant.primary_color ?? '#FF6B35'}22` : 'rgba(255,255,255,0.04)',
+                color: popularOnly ? '#F5F5F5' : '#A3A3A3',
+                fontSize: '0.76rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+              }}
+            >
+              🔥 Popular
+            </button>
+            {[
+              ['all', 'All'],
+              ['veg', '🟢 Veg'],
+              ['vegan', '🌱 Vegan'],
+              ['non_veg', '🔴 Non-veg'],
+              ['jain', 'J Jain'],
+            ].map(([value, label]) => (
+              <button
+                type="button"
+                key={value}
+                onClick={() => setDietaryFilter(value)}
+                style={{
+                  flexShrink: 0,
+                  padding: '8px 12px',
+                  borderRadius: '999px',
+                  border: `1px solid ${dietaryFilter === value ? restaurant.primary_color ?? '#FF6B35' : 'rgba(255,255,255,0.12)'}`,
+                  background: dietaryFilter === value ? `${restaurant.primary_color ?? '#FF6B35'}22` : 'rgba(255,255,255,0.04)',
+                  color: dietaryFilter === value ? '#F5F5F5' : '#A3A3A3',
+                  fontSize: '0.76rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </section>
+
+        {spotlightItems.length > 0 && !searchQuery && dietaryFilter === 'all' && !popularOnly && (
+          <section style={{ padding: '16px 16px 4px' }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: '10px' }}>
+              <h2 style={{ color: '#F5F5F5', fontSize: '1rem', fontWeight: 800 }}>Popular picks</h2>
+              <span style={{ color: '#737373', fontSize: '0.72rem' }}>{availableItemCount} items available</span>
+            </div>
+            <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', scrollbarWidth: 'none', paddingBottom: '4px' }}>
+              {spotlightItems.map(item => (
+                <button
+                  type="button"
+                  key={item.id}
+                  onClick={() => setCustomizerItem(item)}
+                  style={{
+                    minWidth: '150px',
+                    maxWidth: '150px',
+                    textAlign: 'left',
+                    padding: 0,
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    borderRadius: '14px',
+                    overflow: 'hidden',
+                    background: 'rgba(255,255,255,0.04)',
+                    color: '#F5F5F5',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <div style={{ height: '86px', position: 'relative', background: 'rgba(255,255,255,0.05)' }}>
+                    {item.image_url ? <Image src={item.image_url} alt="" fill style={{ objectFit: 'cover' }} /> : <span style={{ display: 'grid', placeItems: 'center', height: '100%', fontSize: '2rem' }}>🍲</span>}
+                  </div>
+                  <div style={{ padding: '9px 10px' }}>
+                    <div style={{ fontWeight: 700, fontSize: '0.8rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.name}</div>
+                    <div style={{ color: restaurant.primary_color ?? '#FF6B35', fontWeight: 800, fontSize: '0.78rem', marginTop: '4px' }}>{formatPrice(item.base_price, restaurant.currency_symbol)}</div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
+
         {filteredCategories.map(category => (
           <div
             key={category.id}
@@ -296,6 +427,11 @@ export default function MenuPageClient({ resolution, categories, settings, table
                             ⭐ Special
                           </span>
                         )}
+                        {item.spice_level && item.spice_level !== 'none' && (
+                          <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#FCA5A5', background: 'rgba(239,68,68,0.1)', padding: '2px 8px', borderRadius: '4px' }}>
+                            🌶️ {item.spice_level.replace('_', ' ')}
+                          </span>
+                        )}
                       </div>
 
                       <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#FFFFFF', marginBottom: '6px', lineHeight: 1.3, letterSpacing: '-0.01em' }}>
@@ -315,6 +451,11 @@ export default function MenuPageClient({ resolution, categories, settings, table
                         {item.preparation_time_minutes && (
                           <div style={{ fontSize: '0.75rem', color: '#737373', display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(255,255,255,0.05)', padding: '4px 8px', borderRadius: '6px' }}>
                             <span style={{ fontSize: '0.8rem' }}>⏱</span> {item.preparation_time_minutes} min
+                          </div>
+                        )}
+                        {item.dietary_type && (
+                          <div style={{ fontSize: '0.72rem', color: '#737373', textTransform: 'capitalize' }}>
+                            {item.dietary_type.replace('_', ' ')}
                           </div>
                         )}
                       </div>

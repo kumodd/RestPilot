@@ -101,6 +101,9 @@ export default function CartSheet({
       }
 
       cart.clearCart()
+      try {
+        localStorage.setItem('restpilot_last_table_token', tableToken)
+      } catch {}
       router.push(`/order/${orderResult.order_token}`)
     } catch {
       setError('Something went wrong. Please check your connection and try again.')
@@ -172,7 +175,7 @@ export default function CartSheet({
 
           {/* Cart Items */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px' }}>
-            {cart.items.map((item, idx) => (
+            {cart.items.map(item => (
               <div
                 key={item.cartItemId}
                 style={{
