@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 import { ORDER_STATUS_CONFIG } from '@/lib/types/app.types'
 import type { OrderStatus } from '@/lib/types/database.types'
 import { format } from 'date-fns'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowLeft } from 'lucide-react'
 import CustomerBottomNav from '@/components/customer/CustomerBottomNav'
 
@@ -56,7 +56,7 @@ interface Props {
 
 export default function OrderTrackingClient({ orderToken }: Props) {
   const { order, isLoading, error, refetch } = useOrderTracking(orderToken)
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
   const [billRequested, setBillRequested] = useState(false)
   const [billError, setBillError] = useState<string | null>(null)
   const [feedbackRating, setFeedbackRating] = useState(0)

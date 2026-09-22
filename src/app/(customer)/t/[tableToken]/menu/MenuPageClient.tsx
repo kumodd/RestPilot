@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useDeferredValue, useMemo } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import { formatPrice } from '@/lib/utils/price'
@@ -73,6 +73,7 @@ export default function MenuPageClient({ resolution, categories, settings, table
   const [dietaryFilter, setDietaryFilter] = useState('all')
   const [popularOnly, setPopularOnly] = useState(false)
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({})
+  const deferredSearchQuery = useDeferredValue(searchQuery)
 
   const brandStyle = {
     '--restaurant-primary': restaurant.primary_color ?? '#FF6B35',
@@ -92,30 +93,41 @@ export default function MenuPageClient({ resolution, categories, settings, table
     }
   }, [])
 
-  const filteredCategories = categories.map(cat => ({
-    ...cat,
-    menu_items: cat.menu_items.filter(item => {
-      if (!item.is_available) return false
-      if (dietaryFilter !== 'all' && item.dietary_type !== dietaryFilter) return false
-      if (popularOnly && !item.is_popular && !item.is_recommended) return false
-      if (!searchQuery) return true
-      return (
-        item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        cat.name.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    }),
-  })).filter(cat => cat.menu_items.length > 0)
+  const filteredCategories = useMemo(() => {
+    const normalizedSearch = deferredSearchQuery.trim().toLowerCase()
+    return categories.map(cat => ({
+      ...cat,
+      menu_items: cat.menu_items.filter(item => {
+        if (!item.is_available) return false
+        if (dietaryFilter !== 'all' && item.dietary_type !== dietaryFilter) return false
+        if (popularOnly && !item.is_popular && !item.is_recommended) return false
+        if (!normalizedSearch) return true
+        return (
+          item.name.toLowerCase().includes(normalizedSearch) ||
+          item.description?.toLowerCase().includes(normalizedSearch) ||
+          cat.name.toLowerCase().includes(normalizedSearch)
+        )
+      }),
+    })).filter(cat => cat.menu_items.length > 0)
+  }, [categories, deferredSearchQuery, dietaryFilter, popularOnly])
 
-  const spotlightItems = categories
+  const spotlightItems = useMemo(() => categories
     .flatMap(category => category.menu_items)
     .filter(item => item.is_available && (item.is_popular || item.is_recommended))
-    .slice(0, 6)
+    .slice(0, 6), [categories])
 
-  const availableItemCount = categories.reduce(
+  const availableItemCount = useMemo(() => categories.reduce(
     (count, category) => count + category.menu_items.filter(item => item.is_available).length,
     0,
-  )
+  ), [categories])
+
+  const cartItemCounts = useMemo(() => {
+    const counts = new Map<string, number>()
+    for (const item of cart.items) {
+      counts.set(item.menuItemId, (counts.get(item.menuItemId) ?? 0) + item.quantity)
+    }
+    return counts
+  }, [cart.items])
 
   const dietaryIcon = (type: string | null) => {
     if (type === 'veg' || type === 'vegan') return '🟢'
@@ -273,7 +285,7 @@ export default function MenuPageClient({ resolution, categories, settings, table
           </div>
         </section>
 
-        {spotlightItems.length > 0 && !searchQuery && dietaryFilter === 'all' && !popularOnly && (
+        {spotlightItems.length > 0 && !deferredSearchQuery && dietaryFilter === 'all' && !popularOnly && (
           <section style={{ padding: '16px 16px 4px' }}>
             <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: '10px' }}>
               <h2 style={{ color: '#262626', fontSize: '1rem', fontWeight: 800 }}>Popular picks</h2>
@@ -300,7 +312,7 @@ export default function MenuPageClient({ resolution, categories, settings, table
                   }}
                 >
                   <div style={{ height: '86px', position: 'relative', background: '#F4F4F5' }}>
-                    {item.image_url ? <Image src={item.image_url} alt="" fill style={{ objectFit: 'cover' }} /> : <span style={{ display: 'grid', placeItems: 'center', height: '100%', fontSize: '2rem' }}>🍲</span>}
+                    {item.image_url ? <Image src={item.image_url} alt="" fill sizes="150px" style={{ objectFit: 'cover' }} /> : <span style={{ display: 'grid', placeItems: 'center', height: '100%', fontSize: '2rem' }}>🍲</span>}
                   </div>
                   <div style={{ padding: '9px 10px' }}>
                     <div style={{ fontWeight: 700, fontSize: '0.8rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.name}</div>
@@ -339,7 +351,7 @@ export default function MenuPageClient({ resolution, categories, settings, table
 
             <div style={{ padding: '0 16px' }}>
               {category.menu_items.map(item => {
-                const inCart = cart.getItemCount(item.id)
+                const inCart = cartItemCounts.get(item.id) ?? 0
                 return (
                   <div
                     key={item.id}
@@ -430,6 +442,7 @@ export default function MenuPageClient({ resolution, categories, settings, table
                             src={item.image_url}
                             alt={item.name}
                             fill
+                            sizes="110px"
                             style={{ objectFit: 'cover' }}
                           />
                         ) : (

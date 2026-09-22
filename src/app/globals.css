@@ -1454,6 +1454,8 @@ a {
   margin-bottom: 10px;
   padding: 13px !important;
   box-shadow: 0 4px 14px rgba(23, 23, 23, 0.045);
+  content-visibility: auto;
+  contain-intrinsic-size: 180px;
 }
 
 .customer-menu-item-title { color: #171717 !important; }
@@ -1534,6 +1536,16 @@ a {
 
 .customer-tracking-back:hover { background: #f4f4f5; }
 .customer-landing-page input::placeholder { color: #8a8a8f; }
+
+@media (max-width: 768px) {
+  /* Keep scrolling on the composited path on phones. Blur over a moving menu is expensive. */
+  .customer-app-bar,
+  .customer-bottom-nav {
+    background: #ffffff;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
 
 .customer-state-page {
   min-height: 100vh;
