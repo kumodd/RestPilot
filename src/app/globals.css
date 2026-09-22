@@ -2734,3 +2734,138 @@ body.app-ui-light .sidebar { overflow: visible; }
     z-index: 920;
   }
 }
+
+/* Floating top-right notification presentation. */
+.notification-anchor {
+  position: fixed;
+  top: 16px;
+  right: 20px;
+  width: auto;
+  padding: 0;
+  z-index: 1100;
+}
+
+.notification-toggle {
+  width: 44px;
+  height: 44px;
+  min-height: 44px;
+  justify-content: center;
+  padding: 0;
+  border-radius: 14px;
+  box-shadow: 0 6px 18px rgba(23, 23, 23, 0.10);
+}
+
+.notification-toggle-label,
+.notification-toggle-status {
+  display: none;
+}
+
+.notification-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+}
+
+.notification-popover {
+  position: fixed;
+  top: 72px;
+  right: 20px;
+  left: auto;
+}
+
+.notification-toast-stack {
+  position: fixed;
+  top: 72px;
+  right: 20px;
+  z-index: 1090;
+  width: min(360px, calc(100vw - 40px));
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.notification-toast {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid rgba(23, 23, 23, 0.10);
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.97);
+  box-shadow: 0 12px 28px rgba(23, 23, 23, 0.12);
+  opacity: 0.5;
+  pointer-events: auto;
+  cursor: pointer;
+  transition: opacity var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
+  touch-action: pan-y;
+}
+
+.notification-toast:hover,
+.notification-toast:focus-visible {
+  opacity: 1;
+  outline: none;
+  box-shadow: 0 14px 32px rgba(23, 23, 23, 0.16);
+}
+
+.notification-toast-copy {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.notification-toast-copy strong {
+  overflow: hidden;
+  color: #262626;
+  font-size: 0.76rem;
+  font-weight: 800;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notification-toast-copy span {
+  color: #737373;
+  font-size: 0.7rem;
+  line-height: 1.4;
+}
+
+.notification-toast-copy small {
+  color: #8a8a8f;
+  font-size: 0.62rem;
+}
+
+.notification-toast-close {
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 26px;
+  border: none;
+  border-radius: 8px;
+  color: #737373;
+  background: #f4f4f5;
+  cursor: pointer;
+}
+
+.notification-toast-close:hover { color: #171717; background: #eaeaec; }
+
+@media (max-width: 768px) {
+  .notification-anchor {
+    top: 12px;
+    right: 12px;
+  }
+
+  .notification-popover {
+    top: 64px;
+    right: 12px;
+  }
+
+  .notification-toast-stack {
+    top: 66px;
+    right: 12px;
+    width: min(360px, calc(100vw - 24px));
+  }
+}

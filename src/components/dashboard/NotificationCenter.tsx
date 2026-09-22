@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import type { TouchEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Bell,
@@ -68,6 +69,8 @@ export default function NotificationCenter({ userId }: { userId: string }) {
   const [isLoading, setIsLoading] = useState(false)
   const [isMarkingAllRead, setIsMarkingAllRead] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [dismissedToastIds, setDismissedToastIds] = useState<string[]>([])
+  const toastTouchStart = useRef<{ id: string; x: number; y: number } | null>(null)
 
   const loadNotifications = useCallback(async () => {
     setIsLoading(true)
@@ -158,6 +161,26 @@ export default function NotificationCenter({ userId }: { userId: string }) {
   const unread = notifications.filter(notification => !notification.is_read)
   const read = notifications.filter(notification => notification.is_read)
   const unreadCount = unread.length
+  const toastNotifications = unread.filter(notification => !dismissedToastIds.includes(notification.id)).slice(0, 3)
+
+  const dismissToast = (notificationId: string) => {
+    setDismissedToastIds(current => current.includes(notificationId) ? current : [...current, notificationId])
+  }
+
+  const handleToastTouchStart = (notificationId: string, event: TouchEvent<HTMLElement>) => {
+    const touch = event.touches[0]
+    toastTouchStart.current = { id: notificationId, x: touch.clientX, y: touch.clientY }
+  }
+
+  const handleToastTouchEnd = (event: TouchEvent<HTMLElement>) => {
+    const start = toastTouchStart.current
+    toastTouchStart.current = null
+    if (!start) return
+    const touch = event.changedTouches[0]
+    const deltaX = touch.clientX - start.x
+    const deltaY = touch.clientY - start.y
+    if (Math.abs(deltaX) > 44 && Math.abs(deltaX) > Math.abs(deltaY)) dismissToast(start.id)
+  }
 
   const renderNotification = (notification: NotificationRow) => {
     const { icon: Icon, tone } = getNotificationMeta(notification.notification_type)
@@ -187,21 +210,70 @@ export default function NotificationCenter({ userId }: { userId: string }) {
     )
   }
 
-  return (
-    <div className="notification-anchor" ref={anchorRef}>
-      <button
-        type="button"
-        className={`notification-toggle ${unreadCount > 0 ? 'has-unread' : ''}`}
-        onClick={() => setIsOpen(value => !value)}
-        aria-label={`Notifications${unreadCount ? ` (${unreadCount} unread)` : ''}`}
-        aria-expanded={isOpen}
-        aria-haspopup="dialog"
+  const renderToast = (notification: NotificationRow) => {
+    const { icon: Icon, tone } = getNotificationMeta(notification.notification_type)
+    return (
+      <article
+        key={notification.id}
+        className="notification-toast"
+        role="button"
+        tabIndex={0}
+        onClick={() => void markRead(notification)}
+        onKeyDown={event => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault()
+            void markRead(notification)
+          }
+        }}
+        onTouchStart={event => handleToastTouchStart(notification.id, event)}
+        onTouchEnd={handleToastTouchEnd}
+        aria-label={`${notification.title}, swipe to dismiss`}
       >
-        <span className="notification-toggle-icon"><Bell size={17} strokeWidth={2.2} /></span>
-        <span className="notification-toggle-label">Notifications</span>
-        {unreadCount > 0 && <span className="notification-badge">{unreadCount > 99 ? '99+' : unreadCount}</span>}
-        <span className="notification-toggle-status">{unreadCount > 0 ? 'Needs attention' : 'All caught up'}</span>
-      </button>
+        <span className={`notification-item-icon notification-tone-${tone}`}>
+          <Icon size={16} strokeWidth={2.2} />
+        </span>
+        <span className="notification-toast-copy">
+          <strong>{notification.title}</strong>
+          {notification.body && <span>{notification.body}</span>}
+          <small>Swipe to dismiss · {relativeTime(notification.created_at)}</small>
+        </span>
+        <button
+          type="button"
+          className="notification-toast-close"
+          onClick={event => {
+            event.stopPropagation()
+            dismissToast(notification.id)
+          }}
+          aria-label={`Dismiss ${notification.title}`}
+        >
+          <X size={15} />
+        </button>
+      </article>
+    )
+  }
+
+  return (
+    <>
+      {toastNotifications.length > 0 && !isOpen && (
+        <div className="notification-toast-stack" aria-live="polite" aria-label="New notifications">
+          {toastNotifications.map(renderToast)}
+        </div>
+      )}
+
+      <div className="notification-anchor" ref={anchorRef}>
+        <button
+          type="button"
+          className={`notification-toggle ${unreadCount > 0 ? 'has-unread' : ''}`}
+          onClick={() => setIsOpen(value => !value)}
+          aria-label={`Notifications${unreadCount ? ` (${unreadCount} unread)` : ''}`}
+          aria-expanded={isOpen}
+          aria-haspopup="dialog"
+        >
+          <span className="notification-toggle-icon"><Bell size={17} strokeWidth={2.2} /></span>
+          <span className="notification-toggle-label">Notifications</span>
+          {unreadCount > 0 && <span className="notification-badge">{unreadCount > 99 ? '99+' : unreadCount}</span>}
+          <span className="notification-toggle-status">{unreadCount > 0 ? 'Needs attention' : 'All caught up'}</span>
+        </button>
 
       {isOpen && (
         <>
@@ -274,6 +346,7 @@ export default function NotificationCenter({ userId }: { userId: string }) {
           </section>
         </>
       )}
-    </div>
+      </div>
+    </>
   )
 }
