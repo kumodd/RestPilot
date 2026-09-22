@@ -2,6 +2,34 @@
 -- RestPilot Migration 018: CRM, guest experience and operations
 -- ============================================================
 
+-- The linked project exposes gen_random_uuid() but not pgcrypto's
+-- gen_random_bytes(). Keep token generation available to the older 017
+-- functions and to this migration without requiring an extension install.
+CREATE OR REPLACE FUNCTION public.gen_random_bytes(p_length INTEGER)
+RETURNS BYTEA
+LANGUAGE plpgsql
+VOLATILE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_hex TEXT := '';
+BEGIN
+  IF p_length IS NULL OR p_length < 1 OR p_length > 1024 THEN
+    RAISE EXCEPTION 'gen_random_bytes length must be between 1 and 1024';
+  END IF;
+
+  WHILE length(v_hex) < p_length * 2 LOOP
+    v_hex := v_hex || replace(gen_random_uuid()::TEXT, '-', '');
+  END LOOP;
+
+  RETURN decode(substr(v_hex, 1, p_length * 2), 'hex');
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.gen_random_bytes(INTEGER) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.gen_random_bytes(INTEGER) TO authenticated;
+
 -- ------------------------------------------------------------
 -- Customer 360 and communication preferences
 -- ------------------------------------------------------------
@@ -26,7 +54,7 @@ CREATE INDEX IF NOT EXISTS idx_customers_restaurant_tags
   ON customers USING GIN (tags);
 
 CREATE TABLE IF NOT EXISTS notification_preferences (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   profile_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   restaurant_id UUID NOT NULL REFERENCES restaurants(id) ON DELETE CASCADE,
   event_type TEXT NOT NULL,
@@ -44,7 +72,7 @@ CREATE TABLE IF NOT EXISTS notification_preferences (
 -- ------------------------------------------------------------
 
 CREATE TABLE IF NOT EXISTS reservations (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   restaurant_id UUID NOT NULL REFERENCES restaurants(id) ON DELETE CASCADE,
   branch_id UUID NOT NULL REFERENCES branches(id) ON DELETE CASCADE,
   customer_id UUID REFERENCES customers(id) ON DELETE SET NULL,
@@ -72,7 +100,7 @@ CREATE INDEX IF NOT EXISTS idx_reservations_customer
   ON reservations (customer_id, starts_at DESC);
 
 CREATE TABLE IF NOT EXISTS customer_feedback (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   restaurant_id UUID NOT NULL REFERENCES restaurants(id) ON DELETE CASCADE,
   branch_id UUID NOT NULL REFERENCES branches(id) ON DELETE CASCADE,
   customer_id UUID REFERENCES customers(id) ON DELETE SET NULL,
@@ -90,7 +118,7 @@ CREATE TABLE IF NOT EXISTS customer_feedback (
 );
 
 CREATE TABLE IF NOT EXISTS loyalty_accounts (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   restaurant_id UUID NOT NULL REFERENCES restaurants(id) ON DELETE CASCADE,
   customer_id UUID NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
   points_balance INTEGER NOT NULL DEFAULT 0 CHECK (points_balance >= 0),
@@ -102,7 +130,7 @@ CREATE TABLE IF NOT EXISTS loyalty_accounts (
 );
 
 CREATE TABLE IF NOT EXISTS loyalty_transactions (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   account_id UUID NOT NULL REFERENCES loyalty_accounts(id) ON DELETE CASCADE,
   order_id UUID REFERENCES orders(id) ON DELETE SET NULL,
   points INTEGER NOT NULL CHECK (points <> 0),
@@ -113,7 +141,7 @@ CREATE TABLE IF NOT EXISTS loyalty_transactions (
 );
 
 CREATE TABLE IF NOT EXISTS campaigns (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   restaurant_id UUID NOT NULL REFERENCES restaurants(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
   channel TEXT NOT NULL DEFAULT 'in_app'
@@ -131,7 +159,7 @@ CREATE TABLE IF NOT EXISTS campaigns (
 );
 
 CREATE TABLE IF NOT EXISTS campaign_recipients (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   campaign_id UUID NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
   customer_id UUID NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
   status TEXT NOT NULL DEFAULT 'queued'
@@ -147,7 +175,7 @@ CREATE TABLE IF NOT EXISTS campaign_recipients (
 -- ------------------------------------------------------------
 
 CREATE TABLE IF NOT EXISTS vendors (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   restaurant_id UUID NOT NULL REFERENCES restaurants(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
   phone TEXT,
@@ -159,7 +187,7 @@ CREATE TABLE IF NOT EXISTS vendors (
 );
 
 CREATE TABLE IF NOT EXISTS inventory_items (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   restaurant_id UUID NOT NULL REFERENCES restaurants(id) ON DELETE CASCADE,
   branch_id UUID REFERENCES branches(id) ON DELETE CASCADE,
   vendor_id UUID REFERENCES vendors(id) ON DELETE SET NULL,
@@ -180,7 +208,7 @@ CREATE INDEX IF NOT EXISTS idx_inventory_branch_stock
   ON inventory_items (branch_id, current_stock, reorder_level);
 
 CREATE TABLE IF NOT EXISTS inventory_movements (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   inventory_item_id UUID NOT NULL REFERENCES inventory_items(id) ON DELETE CASCADE,
   branch_id UUID REFERENCES branches(id) ON DELETE SET NULL,
   movement_type TEXT NOT NULL
@@ -194,7 +222,7 @@ CREATE TABLE IF NOT EXISTS inventory_movements (
 );
 
 CREATE TABLE IF NOT EXISTS recipes (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   restaurant_id UUID NOT NULL REFERENCES restaurants(id) ON DELETE CASCADE,
   menu_item_id UUID NOT NULL REFERENCES menu_items(id) ON DELETE CASCADE,
   yield_quantity DECIMAL(12,3) NOT NULL DEFAULT 1,
@@ -205,7 +233,7 @@ CREATE TABLE IF NOT EXISTS recipes (
 );
 
 CREATE TABLE IF NOT EXISTS recipe_ingredients (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   recipe_id UUID NOT NULL REFERENCES recipes(id) ON DELETE CASCADE,
   inventory_item_id UUID NOT NULL REFERENCES inventory_items(id) ON DELETE CASCADE,
   quantity DECIMAL(12,3) NOT NULL CHECK (quantity > 0),
@@ -218,7 +246,7 @@ CREATE TABLE IF NOT EXISTS recipe_ingredients (
 -- ------------------------------------------------------------
 
 CREATE TABLE IF NOT EXISTS staff_shifts (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   restaurant_id UUID NOT NULL REFERENCES restaurants(id) ON DELETE CASCADE,
   branch_id UUID NOT NULL REFERENCES branches(id) ON DELETE CASCADE,
   staff_member_id UUID NOT NULL REFERENCES staff_members(id) ON DELETE CASCADE,
@@ -234,7 +262,7 @@ CREATE TABLE IF NOT EXISTS staff_shifts (
 );
 
 CREATE TABLE IF NOT EXISTS staff_attendance (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   staff_member_id UUID NOT NULL REFERENCES staff_members(id) ON DELETE CASCADE,
   branch_id UUID NOT NULL REFERENCES branches(id) ON DELETE CASCADE,
   clocked_in_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -246,7 +274,7 @@ CREATE TABLE IF NOT EXISTS staff_attendance (
 );
 
 CREATE TABLE IF NOT EXISTS integration_connections (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   restaurant_id UUID NOT NULL REFERENCES restaurants(id) ON DELETE CASCADE,
   provider TEXT NOT NULL,
   status TEXT NOT NULL DEFAULT 'disconnected'
