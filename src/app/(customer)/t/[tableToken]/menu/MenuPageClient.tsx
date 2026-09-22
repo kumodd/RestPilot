@@ -550,7 +550,7 @@ export default function MenuPageClient({ resolution, categories, settings, table
 
       <CustomerBottomNav
         tableToken={tableToken}
-        active="menu"
+        active={cartOpen ? 'cart' : 'menu'}
         cartCount={cart.totalItems}
         orderToken={existingOrderToken}
         onCart={() => setCartOpen(true)}

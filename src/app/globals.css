@@ -1419,6 +1419,12 @@ a {
   background: color-mix(in srgb, var(--restaurant-primary, #ff6b35) 10%, transparent);
 }
 
+.customer-bottom-nav-item.is-disabled {
+  color: #c4c4c8;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 .customer-bottom-cart b {
   position: absolute;
   top: 3px;

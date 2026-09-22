@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { useCustomerStorage } from '@/lib/hooks/useCustomerStorage'
 import type { QRResolution } from '@/lib/types/app.types'
+import CustomerBottomNav from '@/components/customer/CustomerBottomNav'
 
 interface Props {
   resolution: QRResolution
@@ -79,7 +80,7 @@ export default function QRLandingClient({ resolution, tableToken }: Props) {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '24px',
+        padding: '24px 24px calc(104px + env(safe-area-inset-bottom))',
         textAlign: 'center',
       }}
     >
@@ -371,6 +372,15 @@ export default function QRLandingClient({ resolution, tableToken }: Props) {
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
       `}</style>
+
+      <CustomerBottomNav
+        tableToken={tableToken}
+        active="home"
+        orderToken={activeOrders[0]?.order_token ?? null}
+        cartHref={activeOrders[0]
+          ? `/t/${tableToken}/menu?order=${encodeURIComponent(activeOrders[0].order_token)}`
+          : `/t/${tableToken}/menu`}
+      />
     </div>
   )
 }

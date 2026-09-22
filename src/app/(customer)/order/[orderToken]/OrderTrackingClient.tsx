@@ -220,7 +220,7 @@ export default function OrderTrackingClient({ orderToken }: Props) {
   const isCancelled = order.status === 'cancelled' || order.status === 'rejected'
 
   return (
-    <div className="customer-tracking-page" style={{ minHeight: '100vh', background: '#F7F7F8', paddingBottom: tableToken ? '86px' : 0 }}>
+    <div className="customer-tracking-page" style={{ minHeight: '100vh', background: '#F7F7F8', paddingBottom: tableToken ? '104px' : 0 }}>
       {/* Hero */}
       <div
         className="customer-tracking-hero"
