@@ -70,13 +70,13 @@ export default function CreateOwnerClient() {
     setIsLoading(false)
   }
 
-  // ── Send Supabase magic-link invite ──────────────────────
+  // ── Send Supabase email OTP ─────────────────────────────
   const handleSendInvite = async () => {
     setIsLoading(true); setError(null)
-    // Use the Supabase client signInWithOtp to send a magic link
+    // The owner completes sign-in at /auth/login with the six-digit code.
     const { error: err } = await supabase.auth.signInWithOtp({
       email: s1.ownerEmail,
-      options: { shouldCreateUser: true, emailRedirectTo: `${window.location.origin}/auth/callback` },
+      options: { shouldCreateUser: true },
     })
     if (err) { setError(err.message); setIsLoading(false); return }
     setInviteSent(true)
@@ -220,7 +220,7 @@ export default function CreateOwnerClient() {
                 </div>
                 {s1.ownerEmail && (
                   <button type="button" className="btn btn-secondary" onClick={handleSendInvite} disabled={isLoading || inviteSent} style={{ width: '100%' }}>
-                    {inviteSent ? '✅ Invite Sent! Now retry below.' : `📧 Send Magic-Link Invite to ${s1.ownerEmail}`}
+                  {inviteSent ? '✅ OTP Sent! Now retry below.' : `📧 Send Email OTP to ${s1.ownerEmail}`}
                   </button>
                 )}
               </div>

@@ -50,7 +50,7 @@ export function useCart({ tableToken, restaurantId }: UseCartOptions) {
     } catch {}
   }, [storageKey])
 
-  const addItem = useCallback((item: Omit<CartItem, 'lineTotal'>) => {
+  const addItem = useCallback((item: Omit<CartItem, 'lineTotal' | 'cartItemId'>) => {
     setCart(prev => {
       // Check if identical item exists (same item + same variants/addons)
       const existingIndex = prev.items.findIndex(
@@ -70,7 +70,8 @@ export function useCart({ tableToken, restaurantId }: UseCartOptions) {
       } else {
         const newItem: CartItem = {
           ...item,
-          lineTotal: computeLineTotal(item),
+          cartItemId: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+          lineTotal: computeLineTotal(item as any),
         }
         newItems = [...prev.items, newItem]
       }
@@ -84,11 +85,9 @@ export function useCart({ tableToken, restaurantId }: UseCartOptions) {
     })
   }, [computeLineTotal, persistCart])
 
-  const removeItem = useCallback((menuItemId: string, variantKey: string = '') => {
+  const removeItem = useCallback((cartItemId: string) => {
     setCart(prev => {
-      const newItems = prev.items.filter(
-        i => !(i.menuItemId === menuItemId && JSON.stringify(i.selectedVariants) === variantKey)
-      )
+      const newItems = prev.items.filter(i => i.cartItemId !== cartItemId)
       persistCart(newItems)
       return {
         items: newItems,
@@ -98,11 +97,11 @@ export function useCart({ tableToken, restaurantId }: UseCartOptions) {
     })
   }, [persistCart])
 
-  const updateQuantity = useCallback((menuItemId: string, delta: number, variantKey: string = '') => {
+  const updateQuantity = useCallback((cartItemId: string, delta: number) => {
     setCart(prev => {
       const newItems = prev.items
         .map(i => {
-          if (!(i.menuItemId === menuItemId && JSON.stringify(i.selectedVariants) === variantKey)) return i
+          if (i.cartItemId !== cartItemId) return i
           const newQty = Math.max(0, i.quantity + delta)
           if (newQty === 0) return null
           return { ...i, quantity: newQty, lineTotal: computeLineTotal({ ...i, quantity: newQty }) }

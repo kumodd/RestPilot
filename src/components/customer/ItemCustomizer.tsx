@@ -40,7 +40,7 @@ interface Props {
   item: Item
   restaurant: { primary_color: string | null; currency_symbol: string }
   onClose: () => void
-  onAddToCart: (item: Omit<CartItem, 'lineTotal'>) => void
+  onAddToCart: (item: Omit<CartItem, 'lineTotal' | 'cartItemId'>) => void
 }
 
 export default function ItemCustomizer({ item, restaurant, onClose, onAddToCart }: Props) {

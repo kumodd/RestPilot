@@ -20,8 +20,8 @@ export default async function AcceptInvitePage({ searchParams }: { searchParams:
   } else {
     try {
       inviteData = await validateInvitation(token)
-    } catch (e: any) {
-      errorMsg = e.message || 'Invalid or expired invitation.'
+    } catch (e) {
+      errorMsg = e instanceof Error ? e.message : 'Invalid or expired invitation.'
     }
   }
 

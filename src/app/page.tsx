@@ -606,7 +606,7 @@ export default function HomePage() {
               { icon: '🏪', label: 'Restaurant Profile', desc: 'Name, contact, branding, currency' },
               { icon: '🍽️', label: 'Menu System', desc: 'Categories, items, variants, add-ons' },
               { icon: '🪑', label: 'Tables & QR Codes', desc: 'Unique QR per table, ready to print' },
-              { icon: '👥', label: 'Staff Access', desc: 'Roles, permissions, and magic-link invite' },
+              { icon: '👥', label: 'Staff Access', desc: 'Roles, permissions, and email OTP invite' },
               { icon: '⚙️', label: 'Order Workflow', desc: 'Configured for your operation' },
               { icon: '👨‍🍳', label: 'Kitchen Workflow', desc: 'KDS ready — new → cooking → ready' },
               { icon: '📱', label: 'Customer Ordering', desc: 'QR scan, browse, order, track' },

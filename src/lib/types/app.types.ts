@@ -81,6 +81,7 @@ export interface MenuCategoryWithItems extends MenuCategory {
 
 // Cart item (client-side only, never sent as price to server)
 export interface CartItem {
+  cartItemId: string
   menuItemId: string
   name: string
   basePrice: number

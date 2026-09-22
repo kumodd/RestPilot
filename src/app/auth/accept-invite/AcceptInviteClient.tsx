@@ -83,10 +83,10 @@ export default function AcceptInviteClient({ token, inviteData, errorMsg }: Prop
         ) : (
           <div style={{ textAlign: 'center' }}>
             <p style={{ color: '#A3A3A3', fontSize: '0.85rem', marginBottom: '20px' }}>
-              Please sign in or create an account to accept this invitation.
+              Sign in with the invited email and its one-time code to accept this invitation.
             </p>
             <Link href={`/auth/login?redirect=/auth/accept-invite?token=${token}`} style={{ ...buttonStyle(false), display: 'inline-block', textDecoration: 'none' }}>
-              Sign In / Sign Up
+              Sign In with Email OTP
             </Link>
           </div>
         )}

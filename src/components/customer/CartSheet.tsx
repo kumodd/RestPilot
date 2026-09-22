@@ -12,8 +12,8 @@ interface Props {
     items: CartItem[]
     totalItems: number
     subtotal: number
-    updateQuantity: (menuItemId: string, delta: number) => void
-    removeItem: (menuItemId: string) => void
+    updateQuantity: (cartItemId: string, delta: number) => void
+    removeItem: (cartItemId: string) => void
     clearCart: () => void
   }
   restaurant: QRResolution['restaurant']
@@ -174,7 +174,7 @@ export default function CartSheet({
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px' }}>
             {cart.items.map((item, idx) => (
               <div
-                key={`${item.menuItemId}-${idx}`}
+                key={item.cartItemId}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -207,9 +207,9 @@ export default function CartSheet({
                   <button
                     onClick={() => {
                       if (item.quantity === 1) {
-                        cart.removeItem(item.menuItemId)
+                        cart.removeItem(item.cartItemId)
                       } else {
-                        cart.updateQuantity(item.menuItemId, -1)
+                        cart.updateQuantity(item.cartItemId, -1)
                       }
                     }}
                     style={{
@@ -232,7 +232,7 @@ export default function CartSheet({
                     {item.quantity}
                   </span>
                   <button
-                    onClick={() => cart.updateQuantity(item.menuItemId, 1)}
+                    onClick={() => cart.updateQuantity(item.cartItemId, 1)}
                     style={{
                       width: '28px',
                       height: '28px',

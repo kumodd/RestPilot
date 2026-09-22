@@ -192,7 +192,7 @@ export default function StaffPageClient({ staff: initial, invitations: initialIn
       
       setInviteMsg({ 
         type: 'success', 
-        text: `Invitation created successfully! The magic link is: ${inviteUrl}` 
+        text: `Invitation created successfully! Ask the staff member to sign in with email OTP, then open: ${inviteUrl}` 
       })
 
       // Normally we'd send an email here instead of showing the link.
@@ -324,7 +324,7 @@ export default function StaffPageClient({ staff: initial, invitations: initialIn
                       onClick={() => {
                         const url = `${typeof window !== 'undefined' ? window.location.origin : ''}/auth/accept-invite?token=${inv.token}`
                         navigator.clipboard.writeText(url)
-                        alert('Magic link copied to clipboard!')
+                        alert('Invitation copied. The staff member must sign in with email OTP before accepting it.')
                       }}
                       style={{ padding: '6px 12px', borderRadius: '8px', border: '1px solid rgba(59,130,246,0.3)', background: 'rgba(59,130,246,0.06)', color: '#60A5FA', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center' }}
                       title="Copy Link"

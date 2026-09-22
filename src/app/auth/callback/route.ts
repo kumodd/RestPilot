@@ -1,22 +1,8 @@
-import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
 export async function GET(request: Request) {
-  const { searchParams, origin } = new URL(request.url)
-  const code = searchParams.get('code')
-  const redirect = searchParams.get('redirect') ?? '/dashboard'
-
-  if (code) {
-    const supabase = await createClient()
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
-    if (!error) {
-      return NextResponse.redirect(`${origin}${redirect}`)
-    }
-    
-    // Log the exact error for debugging
-    console.error('Supabase auth callback error:', error)
-    return NextResponse.redirect(`${origin}/auth/login?error=auth_callback_failed&details=${encodeURIComponent(error.message)}`)
-  }
-
-  return NextResponse.redirect(`${origin}/auth/login?error=missing_code`)
+  const { origin } = new URL(request.url)
+  // RestPilot does not authenticate through magic links or callback codes.
+  // A user must request and verify a six-digit email OTP on /auth/login.
+  return NextResponse.redirect(`${origin}/auth/login?error=otp_required`)
 }
