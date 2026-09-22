@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { formatPrice } from '@/lib/utils/price'
 import { createClient } from '@/lib/supabase/client'
@@ -36,7 +36,7 @@ export default function CartSheet({
   onClose,
 }: Props) {
   const router = useRouter()
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
   const { save: saveCustomer } = useCustomerStorage(restaurant.id)
 
   const [name, setName] = useState(initialCustomerData?.name ?? '')
@@ -44,6 +44,21 @@ export default function CartSheet({
   const [notes, setNotes] = useState('')
   const [isPlacing, setIsPlacing] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const isPlacingRef = useRef(false)
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose()
+    }
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    document.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [onClose])
   
   // Persist the idempotency key across re-renders of the CartSheet
   const [clientRequestId] = useState(() => `${Date.now()}-${Math.random().toString(36).slice(2)}`)
@@ -58,11 +73,17 @@ export default function CartSheet({
   const displayTotal = cart.subtotal + displayTax + displaySC
 
   const handlePlaceOrder = async () => {
+    if (isPlacingRef.current) return
+    if (!existingOrderToken && settings?.customer_name_required && !name.trim()) {
+      setError('Your name is required')
+      return
+    }
     if (!existingOrderToken && settings?.customer_phone_required && !phone.trim()) {
       setError('Phone number is required')
       return
     }
 
+    isPlacingRef.current = true
     setIsPlacing(true)
     setError(null)
 
@@ -103,7 +124,6 @@ export default function CartSheet({
       const orderResult = data as { error?: string; order_token?: string } | null
       if (rpcError || !orderResult || orderResult.error) {
         setError(rpcError?.message ?? orderResult?.error ?? 'Failed to place order. Please try again.')
-        setIsPlacing(false)
         return
       }
 
@@ -114,6 +134,8 @@ export default function CartSheet({
       router.push(`/order/${existingOrderToken ?? orderResult?.order_token}`)
     } catch {
       setError('Something went wrong. Please check your connection and try again.')
+    } finally {
+      isPlacingRef.current = false
       setIsPlacing(false)
     }
   }
@@ -122,6 +144,7 @@ export default function CartSheet({
     <>
       {/* Overlay */}
       <div
+        className="customer-modal-overlay"
         style={{
           position: 'fixed',
           inset: 0,
@@ -266,7 +289,7 @@ export default function CartSheet({
           </div>
 
           {/* Customer Info */}
-          <div
+          {!existingOrderToken && <div
             style={{
               background: '#FAFAFA',
               border: '1px solid rgba(23,23,23,0.07)',
@@ -336,7 +359,7 @@ export default function CartSheet({
                 ✓ Details auto-filled from your last visit
               </p>
             )}
-          </div>
+          </div>}
 
           {/* Price Summary */}
           <div

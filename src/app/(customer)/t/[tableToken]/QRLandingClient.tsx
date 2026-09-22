@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useCustomerStorage } from '@/lib/hooks/useCustomerStorage'
 import type { QRResolution } from '@/lib/types/app.types'
@@ -21,6 +22,8 @@ interface ActiveOrder {
 
 export default function QRLandingClient({ resolution, tableToken }: Props) {
   const { restaurant, branch, table } = resolution
+  const searchParams = useSearchParams()
+  const carriedOrderToken = searchParams.get('order')
   const [isLoading, setIsLoading] = useState(false)
 
   const supabase = useMemo(() => createClient(), [])
@@ -29,6 +32,10 @@ export default function QRLandingClient({ resolution, tableToken }: Props) {
   const [isCheckingOrders, setIsCheckingOrders] = useState(false)
   const [manualPhone, setManualPhone] = useState('')
   const [showManualCheck, setShowManualCheck] = useState(false)
+  const activeOrderToken = carriedOrderToken ?? activeOrders[0]?.order_token ?? null
+  const menuHref = activeOrderToken
+    ? `/t/${tableToken}/menu?order=${encodeURIComponent(activeOrderToken)}`
+    : `/t/${tableToken}/menu`
 
   const checkOrders = useCallback(async (phoneToUse: string) => {
     if (!phoneToUse.trim()) return
@@ -193,7 +200,7 @@ export default function QRLandingClient({ resolution, tableToken }: Props) {
         {restaurant.is_accepting_orders ? (
           <>
             <Link
-              href={`/t/${tableToken}/menu`}
+              href={menuHref}
               onClick={() => setIsLoading(true)}
               style={{
                 display: 'flex',
@@ -376,10 +383,8 @@ export default function QRLandingClient({ resolution, tableToken }: Props) {
       <CustomerBottomNav
         tableToken={tableToken}
         active="home"
-        orderToken={activeOrders[0]?.order_token ?? null}
-        cartHref={activeOrders[0]
-          ? `/t/${tableToken}/menu?order=${encodeURIComponent(activeOrders[0].order_token)}`
-          : `/t/${tableToken}/menu`}
+        orderToken={activeOrderToken}
+        cartHref={menuHref}
       />
     </div>
   )

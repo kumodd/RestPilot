@@ -1,12 +1,12 @@
 'use client'
 
-import { useState, useRef, useCallback, useDeferredValue, useMemo } from 'react'
+import { memo, useState, useRef, useCallback, useDeferredValue, useMemo, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import { formatPrice } from '@/lib/utils/price'
 import { useCart } from '@/lib/hooks/useCart'
 import { useCustomerStorage } from '@/lib/hooks/useCustomerStorage'
-import type { QRResolution } from '@/lib/types/app.types'
+import type { CartItem, QRResolution } from '@/lib/types/app.types'
 import type { RestaurantSettings } from '@/lib/types/app.types'
 import CartSheet from '@/components/customer/CartSheet'
 import ItemCustomizer from '@/components/customer/ItemCustomizer'
@@ -54,6 +54,155 @@ interface MenuItem {
   }>
 }
 
+interface MenuItemCardProps {
+  item: MenuItem
+  inCart: number
+  primaryColor: string
+  currencySymbol: string
+  onOpen: (item: MenuItem) => void
+  onAddSimple: (item: MenuItem) => void
+}
+
+const MenuItemCard = memo(function MenuItemCard({ item, inCart, primaryColor, currencySymbol, onOpen, onAddSimple }: MenuItemCardProps) {
+  const dietaryIcon = item.dietary_type === 'veg' || item.dietary_type === 'vegan'
+    ? '🟢'
+    : item.dietary_type === 'non_veg'
+      ? '🔴'
+      : null
+
+  return (
+    <div
+      className="customer-menu-item-card"
+      style={{
+        display: 'flex',
+        gap: '14px',
+        padding: '13px',
+        cursor: 'pointer',
+        position: 'relative',
+      }}
+      onClick={() => onOpen(item)}
+    >
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: 'flex', gap: '6px', marginBottom: '8px', flexWrap: 'wrap' }}>
+          {dietaryIcon && (
+            <span style={{ fontSize: '0.75rem', display: 'flex', alignItems: 'center' }}>
+              {dietaryIcon}
+            </span>
+          )}
+          {item.is_popular && (
+            <span style={{ fontSize: '0.65rem', fontWeight: 800, color: '#D97706', background: 'rgba(217,119,6,0.15)', padding: '2px 8px', borderRadius: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              🔥 Popular
+            </span>
+          )}
+          {item.is_new && (
+            <span style={{ fontSize: '0.65rem', fontWeight: 800, color: '#059669', background: 'rgba(5,150,105,0.15)', padding: '2px 8px', borderRadius: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              ✨ New
+            </span>
+          )}
+          {item.is_special && (
+            <span style={{ fontSize: '0.65rem', fontWeight: 800, color: '#7C3AED', background: 'rgba(124,58,237,0.15)', padding: '2px 8px', borderRadius: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              ⭐ Special
+            </span>
+          )}
+          {item.spice_level && item.spice_level !== 'none' && (
+            <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#B91C1C', background: 'rgba(239,68,68,0.1)', padding: '2px 8px', borderRadius: '4px' }}>
+              🌶️ {item.spice_level.replace('_', ' ')}
+            </span>
+          )}
+        </div>
+
+        <h3 className="customer-menu-item-title" style={{ fontSize: '1.05rem', fontWeight: 800, color: '#171717', marginBottom: '6px', lineHeight: 1.3, letterSpacing: '-0.01em' }}>
+          {item.name}
+        </h3>
+
+        {item.description && (
+          <p className="customer-menu-item-description" style={{ fontSize: '0.85rem', color: '#737373', lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', marginBottom: '12px' }}>
+            {item.description}
+          </p>
+        )}
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+          <div className="customer-menu-item-price" style={{ fontWeight: 800, fontSize: '1rem', color: '#171717' }}>
+            {formatPrice(item.base_price, currencySymbol)}
+          </div>
+          {item.preparation_time_minutes && (
+            <div style={{ fontSize: '0.75rem', color: '#737373', display: 'flex', alignItems: 'center', gap: '4px', background: '#F4F4F5', padding: '4px 8px', borderRadius: '6px' }}>
+              <span style={{ fontSize: '0.8rem' }}>⏱</span> {item.preparation_time_minutes} min
+            </div>
+          )}
+          {item.dietary_type && (
+            <div style={{ fontSize: '0.72rem', color: '#737373', textTransform: 'capitalize' }}>
+              {item.dietary_type.replace('_', ' ')}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div style={{ position: 'relative', flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
+        <div style={{
+          width: '110px',
+          height: '110px',
+          borderRadius: '16px',
+          overflow: 'hidden',
+          position: 'relative',
+          boxShadow: '0 8px 16px rgba(0,0,0,0.2)',
+          background: 'linear-gradient(135deg, #FAFAFA 0%, #F4F4F5 100%)',
+          border: '1px solid rgba(23,23,23,0.06)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}>
+          {item.image_url ? (
+            <Image
+              src={item.image_url}
+              alt={item.name}
+              fill
+              sizes="110px"
+              style={{ objectFit: 'cover' }}
+            />
+          ) : (
+            <span style={{ fontSize: '2.5rem', opacity: 0.5, filter: 'grayscale(100%)' }}>🍲</span>
+          )}
+        </div>
+
+        <button
+          type="button"
+          onClick={event => {
+            event.stopPropagation()
+            if (item.menu_item_variants.length > 0 || item.menu_addons.length > 0) {
+              onOpen(item)
+            } else {
+              onAddSimple(item)
+            }
+          }}
+          aria-label={`Add ${item.name} to cart`}
+          style={{
+            position: 'absolute',
+            bottom: '-8px',
+            right: '-8px',
+            width: '32px',
+            height: '32px',
+            borderRadius: '50%',
+            background: primaryColor,
+            color: 'white',
+            border: '2.5px solid #FFFFFF',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '1.1rem',
+            fontWeight: 700,
+            cursor: 'pointer',
+            boxShadow: `0 4px 12px ${primaryColor}60`,
+            zIndex: 2,
+          }}
+        >
+          {inCart > 0 ? inCart : '+'}
+        </button>
+      </div>
+    </div>
+  )
+})
+
 interface Props {
   resolution: QRResolution
   categories: MenuCategory[]
@@ -81,17 +230,18 @@ export default function MenuPageClient({ resolution, categories, settings, table
   } as React.CSSProperties
 
   const cart = useCart({ tableToken, restaurantId: restaurant.id })
+  const { addItem } = cart
   const { customerData } = useCustomerStorage(restaurant.id)
 
   const scrollToCategory = useCallback((categoryId: string) => {
     setActiveCategory(categoryId)
     const el = sectionRefs.current[categoryId]
-    if (el) {
-      const navHeight = 112
+    if (el?.isConnected) {
+      const navHeight = searchOpen ? 172 : 120
       const top = el.getBoundingClientRect().top + window.scrollY - navHeight
       window.scrollTo({ top, behavior: 'smooth' })
     }
-  }, [])
+  }, [searchOpen])
 
   const filteredCategories = useMemo(() => {
     const normalizedSearch = deferredSearchQuery.trim().toLowerCase()
@@ -111,6 +261,31 @@ export default function MenuPageClient({ resolution, categories, settings, table
     })).filter(cat => cat.menu_items.length > 0)
   }, [categories, deferredSearchQuery, dietaryFilter, popularOnly])
 
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('IntersectionObserver' in window)) return
+
+    const observer = new IntersectionObserver(
+      entries => {
+        const visibleEntry = entries
+          .filter(entry => entry.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0]
+        const categoryId = visibleEntry?.target.getAttribute('data-category-id')
+        if (categoryId) setActiveCategory(categoryId)
+      },
+      { rootMargin: `-${searchOpen ? 172 : 120}px 0px -55% 0px`, threshold: 0.01 },
+    )
+
+    filteredCategories.forEach(category => {
+      const section = sectionRefs.current[category.id]
+      if (section) {
+        section.setAttribute('data-category-id', category.id)
+        observer.observe(section)
+      }
+    })
+
+    return () => observer.disconnect()
+  }, [filteredCategories, searchOpen])
+
   const spotlightItems = useMemo(() => categories
     .flatMap(category => category.menu_items)
     .filter(item => item.is_available && (item.is_popular || item.is_recommended))
@@ -129,11 +304,38 @@ export default function MenuPageClient({ resolution, categories, settings, table
     return counts
   }, [cart.items])
 
-  const dietaryIcon = (type: string | null) => {
-    if (type === 'veg' || type === 'vegan') return '🟢'
-    if (type === 'non_veg') return '🔴'
-    return null
-  }
+  const openCustomizer = useCallback((item: MenuItem) => {
+    setCustomizerItem(item)
+  }, [])
+
+  const closeCustomizer = useCallback(() => {
+    setCustomizerItem(null)
+  }, [])
+
+  const openCart = useCallback(() => {
+    setCartOpen(true)
+  }, [])
+
+  const closeCart = useCallback(() => {
+    setCartOpen(false)
+  }, [])
+
+  const addSimpleItem = useCallback((item: MenuItem) => {
+    addItem({
+      menuItemId: item.id,
+      name: item.name,
+      basePrice: item.base_price,
+      quantity: 1,
+      selectedVariants: [],
+      selectedAddons: [],
+      specialInstructions: '',
+    })
+  }, [addItem])
+
+  const addCustomizedItem = useCallback((cartItem: Omit<CartItem, 'lineTotal' | 'cartItemId'>) => {
+    addItem(cartItem)
+    setCustomizerItem(null)
+  }, [addItem])
 
   return (
     <div style={brandStyle} className="theme-customer customer-app-page customer-menu-shell" id="menu-page">
@@ -182,7 +384,7 @@ export default function MenuPageClient({ resolution, categories, settings, table
           borderBottom: '1px solid rgba(23,23,23,0.06)',
         }}
       >
-        {categories.map(cat => (
+        {filteredCategories.map(cat => (
           <button
             type="button"
             key={cat.id}
@@ -297,7 +499,7 @@ export default function MenuPageClient({ resolution, categories, settings, table
                   type="button"
                   key={item.id}
                   className="customer-menu-card"
-                  onClick={() => setCustomizerItem(item)}
+                  onClick={() => openCustomizer(item)}
                   style={{
                     minWidth: '150px',
                     maxWidth: '150px',
@@ -350,150 +552,17 @@ export default function MenuPageClient({ resolution, categories, settings, table
             </div>
 
             <div style={{ padding: '0 16px' }}>
-              {category.menu_items.map(item => {
-                const inCart = cartItemCounts.get(item.id) ?? 0
-                return (
-                  <div
-                    key={item.id}
-                    className="customer-menu-item-card"
-                    style={{
-                      display: 'flex',
-                      gap: '14px',
-                      padding: '13px',
-                      cursor: 'pointer',
-                      position: 'relative',
-                    }}
-                    onClick={() => setCustomizerItem(item)}
-                  >
-                    {/* Info */}
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: 'flex', gap: '6px', marginBottom: '8px', flexWrap: 'wrap' }}>
-                        {dietaryIcon(item.dietary_type) && (
-                          <span style={{ fontSize: '0.75rem', display: 'flex', alignItems: 'center' }}>
-                            {dietaryIcon(item.dietary_type)}
-                          </span>
-                        )}
-                        {item.is_popular && (
-                          <span style={{ fontSize: '0.65rem', fontWeight: 800, color: '#D97706', background: 'rgba(217,119,6,0.15)', padding: '2px 8px', borderRadius: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                            🔥 Popular
-                          </span>
-                        )}
-                        {item.is_new && (
-                          <span style={{ fontSize: '0.65rem', fontWeight: 800, color: '#059669', background: 'rgba(5,150,105,0.15)', padding: '2px 8px', borderRadius: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                            ✨ New
-                          </span>
-                        )}
-                        {item.is_special && (
-                          <span style={{ fontSize: '0.65rem', fontWeight: 800, color: '#7C3AED', background: 'rgba(124,58,237,0.15)', padding: '2px 8px', borderRadius: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                            ⭐ Special
-                          </span>
-                        )}
-                        {item.spice_level && item.spice_level !== 'none' && (
-                          <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#B91C1C', background: 'rgba(239,68,68,0.1)', padding: '2px 8px', borderRadius: '4px' }}>
-                            🌶️ {item.spice_level.replace('_', ' ')}
-                          </span>
-                        )}
-                      </div>
-
-                      <h3 className="customer-menu-item-title" style={{ fontSize: '1.05rem', fontWeight: 800, color: '#171717', marginBottom: '6px', lineHeight: 1.3, letterSpacing: '-0.01em' }}>
-                        {item.name}
-                      </h3>
-
-                      {item.description && (
-                        <p className="customer-menu-item-description" style={{ fontSize: '0.85rem', color: '#737373', lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', marginBottom: '12px' }}>
-                          {item.description}
-                        </p>
-                      )}
-
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-                        <div className="customer-menu-item-price" style={{ fontWeight: 800, fontSize: '1rem', color: '#171717' }}>
-                          {formatPrice(item.base_price, restaurant.currency_symbol)}
-                        </div>
-                        {item.preparation_time_minutes && (
-                          <div style={{ fontSize: '0.75rem', color: '#737373', display: 'flex', alignItems: 'center', gap: '4px', background: '#F4F4F5', padding: '4px 8px', borderRadius: '6px' }}>
-                            <span style={{ fontSize: '0.8rem' }}>⏱</span> {item.preparation_time_minutes} min
-                          </div>
-                        )}
-                        {item.dietary_type && (
-                          <div style={{ fontSize: '0.72rem', color: '#737373', textTransform: 'capitalize' }}>
-                            {item.dietary_type.replace('_', ' ')}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Image + Add */}
-                    <div style={{ position: 'relative', flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
-                      <div style={{
-                        width: '110px',
-                        height: '110px',
-                        borderRadius: '16px',
-                        overflow: 'hidden',
-                        position: 'relative',
-                        boxShadow: '0 8px 16px rgba(0,0,0,0.2)',
-                        background: 'linear-gradient(135deg, #FAFAFA 0%, #F4F4F5 100%)',
-                        border: '1px solid rgba(23,23,23,0.06)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}>
-                        {item.image_url ? (
-                          <Image
-                            src={item.image_url}
-                            alt={item.name}
-                            fill
-                            sizes="110px"
-                            style={{ objectFit: 'cover' }}
-                          />
-                        ) : (
-                          <span style={{ fontSize: '2.5rem', opacity: 0.5, filter: 'grayscale(100%)' }}>🍲</span>
-                        )}
-                      </div>
-
-                      {/* Add Button */}
-                      <button
-                        onClick={e => {
-                          e.stopPropagation()
-                          if (item.menu_item_variants.length > 0 || item.menu_addons.length > 0) {
-                            setCustomizerItem(item)
-                          } else {
-                            cart.addItem({
-                              menuItemId: item.id,
-                              name: item.name,
-                              basePrice: item.base_price,
-                              quantity: 1,
-                              selectedVariants: [],
-                              selectedAddons: [],
-                              specialInstructions: '',
-                            })
-                          }
-                        }}
-                        style={{
-                          position: 'absolute',
-                          bottom: '-8px',
-                          right: '-8px',
-                          width: '32px',
-                          height: '32px',
-                          borderRadius: '50%',
-                          background: restaurant.primary_color ?? '#FF6B35',
-                          color: 'white',
-                          border: '2.5px solid #FFFFFF',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '1.1rem',
-                          fontWeight: 700,
-                          cursor: 'pointer',
-                          boxShadow: `0 4px 12px ${restaurant.primary_color ?? '#FF6B35'}60`,
-                          zIndex: 2,
-                        }}
-                      >
-                        {inCart > 0 ? inCart : '+'}
-                      </button>
-                    </div>
-                  </div>
-                )
-              })}
+              {category.menu_items.map(item => (
+                <MenuItemCard
+                  key={item.id}
+                  item={item}
+                  inCart={cartItemCounts.get(item.id) ?? 0}
+                  primaryColor={restaurant.primary_color ?? '#FF6B35'}
+                  currencySymbol={restaurant.currency_symbol}
+                  onOpen={openCustomizer}
+                  onAddSimple={addSimpleItem}
+                />
+              ))}
             </div>
           </div>
         ))}
@@ -523,7 +592,7 @@ export default function MenuPageClient({ resolution, categories, settings, table
       {cart.totalItems > 0 && (
         <button
           className="cart-fab"
-          onClick={() => setCartOpen(true)}
+          onClick={openCart}
           aria-label="Open cart"
         >
           <div className="cart-fab-count">{cart.totalItems}</div>
@@ -539,11 +608,8 @@ export default function MenuPageClient({ resolution, categories, settings, table
         <ItemCustomizer
           item={customizerItem}
           restaurant={restaurant}
-          onClose={() => setCustomizerItem(null)}
-          onAddToCart={cartItem => {
-            cart.addItem(cartItem)
-            setCustomizerItem(null)
-          }}
+          onClose={closeCustomizer}
+          onAddToCart={addCustomizedItem}
         />
       )}
 
@@ -557,7 +623,7 @@ export default function MenuPageClient({ resolution, categories, settings, table
           customerData={customerData}
           tableToken={tableToken}
           existingOrderToken={existingOrderToken}
-          onClose={() => setCartOpen(false)}
+          onClose={closeCart}
         />
       )}
 
@@ -566,7 +632,7 @@ export default function MenuPageClient({ resolution, categories, settings, table
         active={cartOpen ? 'cart' : 'menu'}
         cartCount={cart.totalItems}
         orderToken={existingOrderToken}
-        onCart={() => setCartOpen(true)}
+        onCart={openCart}
       />
     </div>
   )

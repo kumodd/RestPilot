@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import { formatPrice } from '@/lib/utils/price'
 import type { CartItem } from '@/lib/types/app.types'
@@ -58,6 +58,20 @@ export default function ItemCustomizer({ item, restaurant, onClose, onAddToCart 
   >([])
   const [instructions, setInstructions] = useState('')
 
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose()
+    }
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    document.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [onClose])
+
   const primaryColor = restaurant.primary_color ?? '#FF6B35'
 
   const selectVariantOption = (variant: Variant, option: VariantOption) => {
@@ -114,6 +128,7 @@ export default function ItemCustomizer({ item, restaurant, onClose, onAddToCart 
     <>
       {/* Overlay */}
       <div
+        className="customer-modal-overlay"
         style={{
           position: 'fixed',
           inset: 0,

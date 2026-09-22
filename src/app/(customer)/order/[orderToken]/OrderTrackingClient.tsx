@@ -335,14 +335,6 @@ export default function OrderTrackingClient({ orderToken }: Props) {
             {isCancelled ? '❌' : statusConfig.step >= 5 ? '✓' : '●'} {statusConfig.label}
           </div>
 
-          {tableToken && (
-            <Link
-              href={`/t/${tableToken}/menu?order=${encodeURIComponent(orderToken)}`}
-              style={{ display: 'block', color: '#737373', fontSize: '0.8rem', marginTop: '14px', textDecoration: 'underline' }}
-            >
-              Add more items
-            </Link>
-          )}
         </div>
       </div>
 

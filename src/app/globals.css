@@ -1472,6 +1472,10 @@ a {
   box-shadow: 0 -12px 36px rgba(23, 23, 23, 0.16);
 }
 
+.customer-modal-overlay {
+  -webkit-backdrop-filter: blur(4px);
+}
+
 .customer-cart-sheet h2,
 .customer-cart-sheet h3 { color: #262626; }
 
@@ -1544,6 +1548,11 @@ a {
     background: #ffffff;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
+  }
+
+  .customer-modal-overlay {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
   }
 }
 

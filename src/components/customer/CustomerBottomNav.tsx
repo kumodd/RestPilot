@@ -16,9 +16,12 @@ export default function CustomerBottomNav({ tableToken, active, cartCount = 0, o
   const menuHref = orderToken
     ? `/t/${tableToken}/menu?order=${encodeURIComponent(orderToken)}`
     : `/t/${tableToken}/menu`
+  const homeHref = orderToken
+    ? `/t/${tableToken}?order=${encodeURIComponent(orderToken)}`
+    : `/t/${tableToken}`
   const ordersHref = orderToken ? `/order/${orderToken}` : null
   const items = [
-    { key: 'home' as const, label: 'Home', href: `/t/${tableToken}`, icon: Home },
+    { key: 'home' as const, label: 'Home', href: homeHref, icon: Home },
     { key: 'menu' as const, label: 'Menu', href: menuHref, icon: Search },
     { key: 'orders' as const, label: 'Orders', href: ordersHref, icon: ClipboardList },
   ]
