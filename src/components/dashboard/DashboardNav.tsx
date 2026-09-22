@@ -93,6 +93,9 @@ export default function DashboardNav({ profile, user, restaurants }: Props) {
   }
 
   const navItems = getNavItems()
+  const mobileNavItems = navItems.length > 0
+    ? navItems.slice(0, 4)
+    : [{ label: 'Overview', href: '/dashboard', icon: '🏠' }]
 
   return (
     <aside className="sidebar">
@@ -263,6 +266,19 @@ export default function DashboardNav({ profile, user, restaurants }: Props) {
           Sign Out
         </button>
       </div>
+
+      <nav className="mobile-dashboard-nav" aria-label="Mobile workspace navigation">
+        {mobileNavItems.map(item => (
+          <Link
+            key={item.href}
+            href={item.href}
+            className={`mobile-dashboard-nav-item ${isActive(item.href, 'exact' in item ? item.exact : false) ? 'active' : ''}`}
+          >
+            <span aria-hidden="true">{item.icon}</span>
+            <span>{item.label}</span>
+          </Link>
+        ))}
+      </nav>
     </aside>
   )
 }

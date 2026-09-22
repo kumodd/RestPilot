@@ -14,8 +14,8 @@ export default function UpdatePasswordClient() {
   )
 }
 
-const pageStyle: React.CSSProperties = { minHeight: '100vh', background: '#0F0F1A', display: 'grid', placeItems: 'center', padding: '24px' }
-const cardStyle: React.CSSProperties = { width: '100%', maxWidth: '420px', background: '#1A1A2E', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '20px', padding: '32px', textAlign: 'center', boxShadow: '0 16px 48px rgba(0,0,0,0.5)' }
-const headingStyle: React.CSSProperties = { color: '#F5F5F5', fontSize: '1.4rem', marginBottom: '12px' }
-const textStyle: React.CSSProperties = { color: '#A3A3A3', fontSize: '0.9rem', lineHeight: 1.6, marginBottom: '24px' }
+const pageStyle: React.CSSProperties = { minHeight: '100vh', background: '#F7F7F8', display: 'grid', placeItems: 'center', padding: '24px' }
+const cardStyle: React.CSSProperties = { width: '100%', maxWidth: '420px', background: '#FFFFFF', border: '1px solid rgba(23,23,23,0.08)', borderRadius: '20px', padding: '32px', textAlign: 'center', boxShadow: '0 16px 48px rgba(23,23,23,0.10)' }
+const headingStyle: React.CSSProperties = { color: '#171717', fontSize: '1.4rem', fontWeight: 800, marginBottom: '12px' }
+const textStyle: React.CSSProperties = { color: '#737373', fontSize: '0.9rem', lineHeight: 1.6, marginBottom: '24px' }
 const buttonStyle: React.CSSProperties = { display: 'inline-block', padding: '13px 20px', background: '#FF6B35', color: 'white', borderRadius: '12px', textDecoration: 'none', fontWeight: 700 }

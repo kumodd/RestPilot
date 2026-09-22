@@ -113,6 +113,19 @@ export default function AdminNav({ profile, user }: Props) {
           Sign Out
         </button>
       </div>
+
+      <nav className="mobile-dashboard-nav" aria-label="Mobile admin navigation">
+        {NAV_ITEMS.slice(0, 4).map(item => (
+          <Link
+            key={item.href}
+            href={item.href}
+            className={`mobile-dashboard-nav-item ${isActive(item.href, item.exact) ? 'active' : ''}`}
+          >
+            <span aria-hidden="true">{item.icon}</span>
+            <span>{item.label}</span>
+          </Link>
+        ))}
+      </nav>
     </aside>
   )
 }

@@ -46,34 +46,34 @@
   --color-info-bg: #EFF6FF;
 
   /* Background */
-  --bg-base: #0F0F1A;
-  --bg-surface: #1A1A2E;
-  --bg-elevated: #242438;
-  --bg-overlay: #2E2E4A;
-  --bg-card: rgba(255, 255, 255, 0.04);
-  --bg-glass: rgba(255, 255, 255, 0.06);
-  --bg-glass-hover: rgba(255, 255, 255, 0.09);
+  --bg-base: #F7F7F8;
+  --bg-surface: #FFFFFF;
+  --bg-elevated: #FFFFFF;
+  --bg-overlay: #F4F4F5;
+  --bg-card: #FFFFFF;
+  --bg-glass: rgba(0, 0, 0, 0.03);
+  --bg-glass-hover: rgba(0, 0, 0, 0.05);
 
   /* Text */
-  --text-primary: #F5F5F5;
-  --text-secondary: #A3A3A3;
+  --text-primary: #171717;
+  --text-secondary: #525252;
   --text-muted: #737373;
   --text-disabled: #525252;
-  --text-inverse: #0F0F1A;
+  --text-inverse: #FFFFFF;
   --text-on-brand: #FFFFFF;
 
   /* Borders */
-  --border-subtle: rgba(255, 255, 255, 0.06);
-  --border-default: rgba(255, 255, 255, 0.10);
-  --border-strong: rgba(255, 255, 255, 0.18);
+  --border-subtle: rgba(23, 23, 23, 0.06);
+  --border-default: rgba(23, 23, 23, 0.10);
+  --border-strong: rgba(23, 23, 23, 0.18);
   --border-brand: rgba(255, 107, 53, 0.4);
 
   /* Shadows */
-  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
-  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4), 0 2px 4px rgba(0, 0, 0, 0.2);
-  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5), 0 4px 8px rgba(0, 0, 0, 0.25);
-  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.6), 0 8px 16px rgba(0, 0, 0, 0.3);
+  --shadow-xs: 0 1px 2px rgba(23, 23, 23, 0.05);
+  --shadow-sm: 0 2px 8px rgba(23, 23, 23, 0.08), 0 1px 2px rgba(23, 23, 23, 0.04);
+  --shadow-md: 0 4px 16px rgba(23, 23, 23, 0.10), 0 2px 4px rgba(23, 23, 23, 0.04);
+  --shadow-lg: 0 8px 32px rgba(23, 23, 23, 0.12), 0 4px 8px rgba(23, 23, 23, 0.05);
+  --shadow-xl: 0 16px 48px rgba(23, 23, 23, 0.14), 0 8px 16px rgba(23, 23, 23, 0.06);
   --shadow-brand: 0 8px 24px rgba(255, 107, 53, 0.3);
   --shadow-glow: 0 0 30px rgba(255, 107, 53, 0.15), 0 0 60px rgba(255, 107, 53, 0.05);
 
@@ -2077,5 +2077,206 @@ a {
     flex-direction: column;
     align-items: center;
     padding: 20px;
+  }
+}
+
+/* ============================================================
+   GLOBAL LIGHT APPLICATION SURFACE
+   ============================================================
+
+   The customer app established the product's primary visual language:
+   warm white surfaces, quiet borders, readable text, and orange actions.
+   These rules make the dashboard, admin, auth, and marketing surfaces use
+   the same language while retaining their existing layout and behavior.
+*/
+
+body.app-ui-light {
+  background: #f7f7f8;
+  color: #171717;
+}
+
+body.app-ui-light .dashboard-layout,
+body.app-ui-light .dashboard-main {
+  background: #f7f7f8;
+}
+
+body.app-ui-light .sidebar,
+body.app-ui-light .topbar,
+body.app-ui-light .modal,
+body.app-ui-light .bottom-sheet,
+body.app-ui-light .toast {
+  background: #ffffff;
+  border-color: rgba(23, 23, 23, 0.08);
+  color: #171717;
+}
+
+body.app-ui-light .sidebar {
+  box-shadow: 4px 0 18px rgba(23, 23, 23, 0.04);
+}
+
+body.app-ui-light .sidebar-logo,
+body.app-ui-light .topbar,
+body.app-ui-light .sidebar > div:last-child {
+  border-color: rgba(23, 23, 23, 0.08);
+}
+
+body.app-ui-light .nav-link { color: #737373; }
+body.app-ui-light .nav-link:hover { background: #f4f4f5; color: #171717; }
+body.app-ui-light .nav-link.active {
+  background: rgba(255, 107, 53, 0.10);
+  color: #e5562b;
+}
+
+body.app-ui-light .sidebar-section-label,
+body.app-ui-light .page-subtitle,
+body.app-ui-light .form-label,
+body.app-ui-light .form-hint {
+  color: #737373;
+}
+
+body.app-ui-light .page-title,
+body.app-ui-light .stat-value,
+body.app-ui-light .order-card-table,
+body.app-ui-light .menu-item-name,
+body.app-ui-light .menu-item-price {
+  color: #171717;
+}
+
+body.app-ui-light .card,
+body.app-ui-light .card-glass,
+body.app-ui-light .card-elevated,
+body.app-ui-light .stat-card,
+body.app-ui-light .order-board-column,
+body.app-ui-light .order-card {
+  background: #ffffff;
+  border-color: rgba(23, 23, 23, 0.07);
+  box-shadow: 0 5px 18px rgba(23, 23, 23, 0.05);
+}
+
+body.app-ui-light .form-input,
+body.app-ui-light .form-textarea,
+body.app-ui-light .form-select {
+  background: #ffffff;
+  border-color: rgba(23, 23, 23, 0.12);
+  color: #171717;
+}
+
+body.app-ui-light .form-input:focus,
+body.app-ui-light .form-textarea:focus,
+body.app-ui-light .form-select:focus {
+  background: #ffffff;
+}
+
+body.app-ui-light .modal-overlay {
+  background: rgba(23, 23, 23, 0.35);
+}
+
+/* Legacy inline color compatibility while individual views migrate to tokens. */
+body.app-ui-light [style*="background:#0F0F1A"],
+body.app-ui-light [style*="background: #0F0F1A"] {
+  background: #f7f7f8 !important;
+  color: #171717 !important;
+}
+
+body.app-ui-light [style*="background:#1A1A2E"],
+body.app-ui-light [style*="background: #1A1A2E"] {
+  background: #ffffff !important;
+  color: #171717 !important;
+  border-color: rgba(23, 23, 23, 0.08) !important;
+}
+
+body.app-ui-light [style*="color:#F5F5F5"],
+body.app-ui-light [style*="color: #F5F5F5"],
+body.app-ui-light [style*="color:#E5E5E5"],
+body.app-ui-light [style*="color: #E5E5E5"] {
+  color: #171717 !important;
+}
+
+body.app-ui-light [style*="color:#A3A3A3"],
+body.app-ui-light [style*="color: #A3A3A3"] {
+  color: #737373 !important;
+}
+
+body.app-ui-light [style*="background:rgba(255,255,255"],
+body.app-ui-light [style*="background: rgba(255, 255, 255"],
+body.app-ui-light [style*="background:rgba(12,12,25"],
+body.app-ui-light [style*="background: rgba(12, 12, 25"] {
+  background: #f7f7f8 !important;
+  color: #171717 !important;
+}
+
+body.app-ui-light [style*="border:1px solid rgba(255,255,255"],
+body.app-ui-light [style*="border: 1px solid rgba(255, 255, 255"],
+body.app-ui-light [style*="border:1.5px solid rgba(255,255,255"],
+body.app-ui-light [style*="border: 1.5px solid rgba(255, 255, 255"] {
+  border-color: rgba(23, 23, 23, 0.10) !important;
+}
+
+body.app-ui-light input::placeholder,
+body.app-ui-light textarea::placeholder,
+body.app-ui-light select::placeholder {
+  color: #8a8a8f;
+}
+
+body.app-ui-light select option {
+  background: #ffffff;
+  color: #171717;
+}
+
+.mobile-dashboard-nav { display: none; }
+
+@media (max-width: 768px) {
+  body.app-ui-light .sidebar {
+    display: block;
+    width: 0;
+    height: 0;
+    min-width: 0;
+    overflow: visible;
+    border: 0;
+    position: static;
+  }
+
+  body.app-ui-light .sidebar > *:not(.mobile-dashboard-nav) {
+    display: none;
+  }
+
+  body.app-ui-light .dashboard-main {
+    padding-bottom: 78px;
+  }
+
+  .mobile-dashboard-nav {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 120;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 4px;
+    padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+    background: rgba(255, 255, 255, 0.96);
+    border-top: 1px solid rgba(23, 23, 23, 0.08);
+    box-shadow: 0 -8px 24px rgba(23, 23, 23, 0.07);
+    backdrop-filter: blur(16px);
+  }
+
+  .mobile-dashboard-nav-item {
+    min-width: 0;
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 2px;
+    border-radius: 12px;
+    color: #737373;
+    font-size: 0.62rem;
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  .mobile-dashboard-nav-item.active {
+    color: #e5562b;
+    background: rgba(255, 107, 53, 0.10);
   }
 }

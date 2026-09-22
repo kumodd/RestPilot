@@ -4,10 +4,16 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
+import type { User } from '@supabase/supabase-js'
+
+interface InvitationData {
+  role: string | null
+  restaurants: Array<{ name: string | null }> | null
+}
 
 interface Props {
   token: string
-  inviteData: any
+  inviteData: InvitationData | null
   errorMsg: string | null
 }
 
@@ -17,7 +23,7 @@ export default function AcceptInviteClient({ token, inviteData, errorMsg }: Prop
 
   const [isLoading, setIsLoading] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<User | null>(null)
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -49,7 +55,7 @@ export default function AcceptInviteClient({ token, inviteData, errorMsg }: Prop
       <div style={containerStyle}>
         <div style={cardStyle}>
           <h1 style={titleStyle}>Invalid Invitation</h1>
-          <p style={{ color: '#FCA5A5', marginBottom: '20px', textAlign: 'center' }}>{errorMsg}</p>
+          <p style={{ color: '#B91C1C', marginBottom: '20px', textAlign: 'center' }}>{errorMsg}</p>
           <div style={{ textAlign: 'center' }}>
             <Link href="/auth/login" style={linkStyle}>Go to Login</Link>
           </div>
@@ -62,15 +68,15 @@ export default function AcceptInviteClient({ token, inviteData, errorMsg }: Prop
     <div style={containerStyle}>
       <div style={cardStyle}>
         <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-          <h1 style={titleStyle}>You've been invited!</h1>
+          <h1 style={titleStyle}>You&apos;ve been invited!</h1>
           <p style={{ color: '#737373', fontSize: '0.9rem' }}>
-            You have been invited to join <strong>{inviteData?.restaurants?.name}</strong> as a <strong>{inviteData?.role}</strong>.
+            You have been invited to join <strong>{inviteData?.restaurants?.[0]?.name}</strong> as a <strong>{inviteData?.role}</strong>.
           </p>
         </div>
 
         {user ? (
           <div style={{ textAlign: 'center' }}>
-            <p style={{ color: '#A3A3A3', fontSize: '0.85rem', marginBottom: '20px' }}>
+            <p style={{ color: '#737373', fontSize: '0.85rem', marginBottom: '20px' }}>
               You are signed in as <strong>{user.email}</strong>.
             </p>
             <button onClick={handleAccept} disabled={isLoading} style={buttonStyle(isLoading)}>
@@ -82,7 +88,7 @@ export default function AcceptInviteClient({ token, inviteData, errorMsg }: Prop
           </div>
         ) : (
           <div style={{ textAlign: 'center' }}>
-            <p style={{ color: '#A3A3A3', fontSize: '0.85rem', marginBottom: '20px' }}>
+            <p style={{ color: '#737373', fontSize: '0.85rem', marginBottom: '20px' }}>
               Sign in with the invited email and its one-time code to accept this invitation.
             </p>
             <Link href={`/auth/login?redirect=/auth/accept-invite?token=${token}`} style={{ ...buttonStyle(false), display: 'inline-block', textDecoration: 'none' }}>
@@ -99,7 +105,7 @@ export default function AcceptInviteClient({ token, inviteData, errorMsg }: Prop
             border: `1px solid ${message.type === 'success' ? 'rgba(34,197,94,0.25)' : 'rgba(239,68,68,0.25)'}`,
             borderRadius: '10px',
             fontSize: '0.85rem',
-            color: message.type === 'success' ? '#86EFAC' : '#FCA5A5',
+            color: message.type === 'success' ? '#15803D' : '#B91C1C',
           }}>
             {message.text}
           </div>
@@ -111,7 +117,7 @@ export default function AcceptInviteClient({ token, inviteData, errorMsg }: Prop
 
 const containerStyle: React.CSSProperties = {
   minHeight: '100vh',
-  background: '#0F0F1A',
+  background: '#F7F7F8',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
@@ -121,24 +127,24 @@ const containerStyle: React.CSSProperties = {
 const cardStyle: React.CSSProperties = {
   width: '100%',
   maxWidth: '420px',
-  background: '#1A1A2E',
-  border: '1px solid rgba(255,255,255,0.08)',
+  background: '#FFFFFF',
+  border: '1px solid rgba(23,23,23,0.08)',
   borderRadius: '20px',
   padding: '32px',
-  boxShadow: '0 16px 48px rgba(0,0,0,0.5)',
+  boxShadow: '0 16px 48px rgba(23,23,23,0.10)',
 }
 
 const titleStyle: React.CSSProperties = {
   fontSize: '1.5rem',
   fontWeight: 800,
-  color: '#F5F5F5',
+  color: '#171717',
   marginBottom: '8px',
   textAlign: 'center'
 }
 
 const linkStyle: React.CSSProperties = {
   fontSize: '0.9rem',
-  color: '#A3A3A3',
+  color: '#737373',
   textDecoration: 'none',
   transition: 'color 0.2s',
 }

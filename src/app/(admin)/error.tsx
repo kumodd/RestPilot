@@ -14,15 +14,13 @@ export default function ErrorBoundary({
   }, [error])
 
   return (
-    <div className="page-content" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
-      <h2 style={{ fontSize: '1.5rem', marginBottom: '16px' }}>Something went wrong!</h2>
-      <p style={{ color: '#A3A3A3', marginBottom: '24px' }}>{error.message || 'An unexpected error occurred.'}</p>
-      <button
-        onClick={() => reset()}
-        className="btn btn-primary"
-      >
-        Try again
-      </button>
+    <div className="customer-state-page">
+      <div className="customer-state-card customer-error-card">
+        <div className="customer-state-icon">⚠️</div>
+        <h2>We couldn&apos;t load admin tools</h2>
+        <p>{error.message || 'An unexpected error occurred.'}</p>
+        <button onClick={() => reset()} className="btn btn-primary">Try again</button>
+      </div>
     </div>
   )
 }
